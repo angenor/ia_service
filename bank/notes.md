@@ -1,0 +1,2 @@
+sachant que chaque services d'ia a sa spécificité, certains acceptent des images d'autres n’acceptent pas, d'autres acceptent 2. Certains n'acceptent que des audios. Et certains on leur propore configuration(ex: djozz, hip-hop pour la musique etc...)
+Comment pourrais-je prendre celà en compte dans mon application
