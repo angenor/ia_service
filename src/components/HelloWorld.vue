@@ -8,12 +8,10 @@ defineProps({
 </script>
 
 <template>
-  <div class="p-4 bg-gray-100 rounded-lg shadow">
-    <h1 class="text-3xl font-bold text-green-500 mb-4">{{ msg }}</h1>
-    <h3 class="text-lg text-gray-700">
-      <div class="text-xl text-red-500">You've successfully created a project with</div>
-      <a href="https://vite.dev/" target="_blank" rel="noopener" class="text-blue-500 hover:text-blue-700 underline">Vite</a> +
-      <a href="https://vuejs.org/" target="_blank" rel="noopener" class="text-blue-500 hover:text-blue-700 underline">Vue 3</a>.
+  <div class="p-4 bg-gray-100 dark:bg-gray-800 rounded-lg shadow transition-colors duration-200">
+    <h1 class="text-3xl font-bold text-green-500 dark:text-green-400 mb-4">{{ $t('welcome.title') }}</h1>
+    <h3 class="text-lg text-gray-700 dark:text-gray-300">
+      {{ $t('welcome.message') }}
     </h3>
   </div>
 </template>

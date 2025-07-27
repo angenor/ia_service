@@ -1,0 +1,20 @@
+{
+  "nav": {
+    "home": "Accueil",
+    "about": "À propos"
+  },
+  "theme": {
+    "toggle": "Changer le thème",
+    "light": "Mode clair",
+    "dark": "Mode sombre"
+  },
+  "language": {
+    "select": "Choisir la langue",
+    "english": "English",
+    "french": "Français"
+  },
+  "welcome": {
+    "title": "Vous avez réussi !",
+    "message": "Bienvenue dans votre application Vue.js"
+  }
+}

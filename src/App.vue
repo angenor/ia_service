@@ -1,85 +1,63 @@
 <script setup>
+import { onMounted } from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
 import HelloWorld from './components/HelloWorld.vue'
+import ThemeToggle from './components/ui/ThemeToggle.vue'
+import LanguageSelector from './components/ui/LanguageSelector.vue'
+import { useThemeStore } from './stores/theme'
+import { useLocaleStore } from './stores/locale'
+
+const themeStore = useThemeStore()
+const localeStore = useLocaleStore()
+
+onMounted(() => {
+  themeStore.initTheme()
+  localeStore.initLocale()
+})
 </script>
 
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
+  <div class="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
+    <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center py-4">
+          <div class="flex items-center space-x-4">
+            <img alt="Vue logo" class="logo w-12 h-12" src="@/assets/logo.svg" />
+            <nav class="flex space-x-6">
+              <RouterLink 
+                to="/" 
+                class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200"
+                :class="{ 'text-primary-600 dark:text-primary-400 font-semibold': $route.path === '/' }"
+              >
+                <font-awesome-icon icon="home" class="w-4 h-4 mr-2" />
+                {{ $t('nav.home') }}
+              </RouterLink>
+              <RouterLink 
+                to="/about" 
+                class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200"
+                :class="{ 'text-primary-600 dark:text-primary-400 font-semibold': $route.path === '/about' }"
+              >
+                <font-awesome-icon icon="info-circle" class="w-4 h-4 mr-2" />
+                {{ $t('nav.about') }}
+              </RouterLink>
+            </nav>
+          </div>
+          
+          <div class="flex items-center space-x-4">
+            <HelloWorld :msg="$t('welcome.title')" />
+          </div>
+          
+          <div class="flex items-center space-x-3">
+            <LanguageSelector />
+            <ThemeToggle />
+          </div>
+        </div>
+      </div>
+    </header>
 
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
-      </nav>
-    </div>
-  </header>
-
-  <RouterView />
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <RouterView />
+    </main>
+  </div>
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
-  max-height: 100vh;
-}
-
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-nav {
-  width: 100%;
-  font-size: 12px;
-  text-align: center;
-  margin-top: 2rem;
-}
-
-nav a.router-link-exact-active {
-  color: var(--color-text);
-}
-
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
-}
-
-nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
-}
-
-nav a:first-of-type {
-  border: 0;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  nav {
-    text-align: left;
-    margin-left: -1rem;
-    font-size: 1rem;
-
-    padding: 1rem 0;
-    margin-top: 1rem;
-  }
-}
-</style>
