@@ -22,10 +22,10 @@
   "sidebar": {
     "quickAction": "Quick Action",
     "search": "Search",
-    "aiPlayground": "AI Playground",
     "profile": "Profile", 
     "about": "About",
-    "contact": "Contact"
+    "contact": "Contact",
+    "settings": "Settings"
   },
   "services": {
     "categories": {
@@ -55,6 +55,37 @@
     "tools": {
       "translation": "Translation",
       "vision": "Vision Analysis"
+    },
+    "providers": "Providers",
+    "videoGeneration": {
+      "title": "Generate Videos",
+      "description": "Generate videos of any style from text or image",
+      "providers": "Voe 3, MidJourney, MiniMax, Kling 2.1 Master..."
+    },
+    "chatBot": {
+      "title": "ChatBot LLM",
+      "description": "Use the most powerful chatbots of the moment...",
+      "providers": "ChatGPT 4.5, Claude opus/sonnet 4, Gemini 2.5 pro..."
+    },
+    "imageGeneration": {
+      "title": "Generate & Modify Images",
+      "description": "Create realistic, artistic, animated videos...",
+      "providers": "DALL-E 3 (OpenAI), MidJourney, MiniMax, Stable Diffusion XL..."
+    },
+    "textToAudio": {
+      "title": "Text to Audio",
+      "description": "Generate ultra-realistic audio/music from text, clone voices...",
+      "providers": "ElevenLabs, MiniMax..."
+    },
+    "audioToText": {
+      "title": "Audio to Text",
+      "description": "Generate texts from audio...",
+      "providers": "ElevenLabs, MiniMax..."
+    },
+    "agent": {
+      "title": "Agent",
+      "description": "Doctor, Lawyer, Legal expert, data analysis, CV writing...",
+      "providers": "ChatGPT 4.5, Claude Opus 4..."
     }
   },
   "user": {
@@ -62,6 +93,118 @@
     "plan": {
       "free": "Free"
     }
+  },
+  "auth": {
+    "notConnected": "Not connected",
+    "pleaseSignIn": "Please sign in",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signOut": "Sign Out",
+    "signingOut": "Signing out...",
+    "signInTitle": "Sign In",
+    "signUpTitle": "Create Account",
+    "email": "Email",
+    "emailPlaceholder": "your{'@'}email.com",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "confirmPassword": "Confirm Password",
+    "confirmPasswordPlaceholder": "Confirm your password",
+    "fullName": "Full Name",
+    "fullNamePlaceholder": "John Doe",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot password?",
+    "signingIn": "Signing in...",
+    "orContinueWith": "Or continue with",
+    "continueWithGoogle": "Continue with Google",
+    "signUpWithGoogle": "Sign up with Google",
+    "noAccount": "Don't have an account?",
+    "signUpLink": "Sign up",
+    "alreadyHaveAccount": "Already have an account?",
+    "signInLink": "Sign in",
+    "passwordHint": "Minimum 6 characters",
+    "agreeToTerms": "I agree to the",
+    "termsAndConditions": "terms and conditions",
+    "createAccount": "Create Account",
+    "creatingAccount": "Creating account..."
+  },
+  "profile": {
+    "title": "My Profile",
+    "avatarInfo": "Profile picture available in future update",
+    "displayName": "Display Name",
+    "displayNamePlaceholder": "Your full name",
+    "username": "Username",
+    "usernamePlaceholder": "your_username",
+    "email": "Email Address",
+    "emailReadOnly": "Email address cannot be changed",
+    "country": "Country",
+    "language": "Language",
+    "accountInfo": "Account Information",
+    "memberSince": "Member since",
+    "lastLogin": "Last login",
+    "plan": "Subscription Plan",
+    "provider": "Login Method",
+    "changePassword": "Change Password",
+    "updateSuccess": "Profile updated successfully"
+  },
+  "countries": {
+    "US": "United States",
+    "FR": "France",
+    "DE": "Germany",
+    "ES": "Spain",
+    "IT": "Italy",
+    "GB": "United Kingdom",
+    "CA": "Canada",
+    "JP": "Japan",
+    "CN": "China"
+  },
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving..."
+  },
+  "settings": {
+    "title": "Settings",
+    "appearance": {
+      "title": "Appearance",
+      "theme": "Theme",
+      "system": "System",
+      "language": "Language"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "email": "Email notifications",
+      "emailDescription": "Receive email notifications for important updates",
+      "browser": "Browser notifications",
+      "browserDescription": "Receive push notifications in the browser",
+      "generation": "Generation notifications",
+      "generationDescription": "Receive notifications when generations are completed",
+      "permissionDenied": "Notification permission denied",
+      "permissionGranted": "Notification permission granted",
+      "notSupported": "Notifications are not supported by this browser"
+    },
+    "privacy": {
+      "title": "Privacy & Security",
+      "analytics": "Analytics data collection",
+      "analyticsDescription": "Allow collection of anonymous data to improve the application",
+      "autosave": "Auto-save",
+      "autosaveDescription": "Automatically save your settings and preferences"
+    },
+    "advanced": {
+      "title": "Advanced Settings",
+      "clearCache": "Clear cache",
+      "clearCacheDescription": "Remove temporarily stored local data",
+      "clear": "Clear",
+      "exportData": "Export data",
+      "exportDataDescription": "Download your settings and data as JSON file",
+      "export": "Export",
+      "cacheCleared": "Cache cleared successfully",
+      "dataExported": "Data exported successfully"
+    },
+    "resetDefaults": "Reset to defaults",
+    "themeUpdated": "Theme updated",
+    "languageUpdated": "Language updated",
+    "resetSuccess": "Settings reset to default values",
+    "saveSuccess": "Settings saved successfully"
   },
   "originalServices": {
     "providers": "Providers",
@@ -99,7 +242,48 @@
   "input": {
     "placeholder": "Enter a prompt",
     "otherOptions": "Other options (variable by model)",
-    "generate": "Generate"
+    "generate": "Generate",
+    "selectServicePrompt": "Select a service to get started",
+    "supportedFormats": "Supported formats",
+    "options": {
+      "title": "Options",
+      "aspectRatio": "Aspect Ratio",
+      "duration": "Duration",
+      "style": "Style",
+      "motion": "Motion",
+      "size": "Size",
+      "quality": "Quality",
+      "strength": "Strength",
+      "genre": "Genre",
+      "model": "Model",
+      "temperature": "Temperature",
+      "targetLanguage": "Target Language",
+      "tone": "Tone",
+      "analysisType": "Analysis Type"
+    },
+    "video": {
+      "textToVideoPlaceholder": "Describe the video you want to generate...",
+      "imageToVideoPlaceholder": "Drag an image or click to select"
+    },
+    "image": {
+      "textToImagePlaceholder": "Describe the image you want to generate...",
+      "imageToImagePlaceholder": "Drag an image or click to select",
+      "imageEditPrompt": "Describe the changes to apply to the image..."
+    },
+    "music": {
+      "textToMusicPlaceholder": "Describe the music you want to generate...",
+      "generationPlaceholder": "Choose a musical style or let AI decide..."
+    },
+    "llm": {
+      "chatPlaceholder": "Ask your question or describe your task..."
+    },
+    "tools": {
+      "translationPlaceholder": "Enter text to translate...",
+      "visionPlaceholder": "Drag an image or click to select",
+      "visionPrompt": "What do you want to know about this image?",
+      "translationDescription": "Translate text in multiple languages",
+      "translationProviders": "DeepL, Google Translate, OpenAI..."
+    }
   },
   "welcome": {
     "title": "You did it!",

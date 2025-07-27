@@ -37,7 +37,16 @@ import {
   faWandMagicSparkles,
   faLanguage,
   faEye,
-  faComments
+  faComments,
+  faSignOutAlt,
+  faSignInAlt,
+  faUserPlus,
+  faTimes,
+  faCloudUploadAlt,
+  faFile,
+  faCamera,
+  faCheckCircle,
+  faLaptop
 } from '@fortawesome/free-solid-svg-icons'
 
 library.add(
@@ -77,7 +86,16 @@ library.add(
   faWandMagicSparkles,
   faLanguage,
   faEye,
-  faComments
+  faComments,
+  faSignOutAlt,
+  faSignInAlt,
+  faUserPlus,
+  faTimes,
+  faCloudUploadAlt,
+  faFile,
+  faCamera,
+  faCheckCircle,
+  faLaptop
 )
 
 export default FontAwesomeIcon

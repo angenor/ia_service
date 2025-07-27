@@ -22,10 +22,10 @@
   "sidebar": {
     "quickAction": "Action Rapide",
     "search": "Rechercher",
-    "aiPlayground": "Terrain de Jeu IA",
     "profile": "Profil",
     "about": "À propos", 
-    "contact": "Contacter"
+    "contact": "Contacter",
+    "settings": "Paramètres"
   },
   "services": {
     "categories": {
@@ -55,6 +55,37 @@
     "tools": {
       "translation": "Traduction",
       "vision": "Analyse Vision"
+    },
+    "providers": "Fournisseurs",
+    "videoGeneration": {
+      "title": "Générer Vidéos",
+      "description": "Générer des vidéo de tout style à partir de texte ou d'image",
+      "providers": "Voe 3, MidJourney, MiniMax, Kling 2.1 Master..."
+    },
+    "chatBot": {
+      "title": "ChatBot LLM",
+      "description": "Utilisez les chatBot les plus puissant du moment...",
+      "providers": "ChatGPT 4.5, Claude opus/sonnet 4, Gemini 2.5 pro..."
+    },
+    "imageGeneration": {
+      "title": "Générer & Modifier Images",
+      "description": "Créé des vidéo réalistes, artistiques, dessin animés...",
+      "providers": "DALL-E 3 (OpenAI), MidJourney, MiniMax, Stable Diffusion XL..."
+    },
+    "textToAudio": {
+      "title": "De Texte à Audio",
+      "description": "Générer des audio/musique ultra réaliste à partir de texte, cloner des voix...",
+      "providers": "ElevenLabs, MiniMax..."
+    },
+    "audioToText": {
+      "title": "D'Audio à texte",
+      "description": "Générer des textes à partir d'audio...",
+      "providers": "ElevenLabs, MiniMax..."
+    },
+    "agent": {
+      "title": "Agent",
+      "description": "Médecin, Avocat, Juriste, analyse de données, rédaction de cv...",
+      "providers": "ChatGPT 4.5, Claude Opus 4..."
     }
   },
   "user": {
@@ -62,6 +93,118 @@
     "plan": {
       "free": "Gratuit"
     }
+  },
+  "auth": {
+    "notConnected": "Non connecté",
+    "pleaseSignIn": "Veuillez vous connecter",
+    "signIn": "Se connecter",
+    "signUp": "S'inscrire",
+    "signOut": "Se déconnecter",
+    "signingOut": "Déconnexion...",
+    "signInTitle": "Connexion",
+    "signUpTitle": "Créer un compte",
+    "email": "Email",
+    "emailPlaceholder": "votre{'@'}email.com",
+    "password": "Mot de passe",
+    "passwordPlaceholder": "Entrez votre mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "confirmPasswordPlaceholder": "Confirmez votre mot de passe",
+    "fullName": "Nom complet",
+    "fullNamePlaceholder": "Jean Dupont",
+    "rememberMe": "Se souvenir de moi",
+    "forgotPassword": "Mot de passe oublié ?",
+    "signingIn": "Connexion...",
+    "orContinueWith": "Ou continuer avec",
+    "continueWithGoogle": "Continuer avec Google",
+    "signUpWithGoogle": "S'inscrire avec Google",
+    "noAccount": "Pas encore de compte ?",
+    "signUpLink": "Inscrivez-vous",
+    "alreadyHaveAccount": "Déjà un compte ?",
+    "signInLink": "Connectez-vous",
+    "passwordHint": "Minimum 6 caractères",
+    "agreeToTerms": "J'accepte les",
+    "termsAndConditions": "conditions d'utilisation",
+    "createAccount": "Créer le compte",
+    "creatingAccount": "Création du compte..."
+  },
+  "profile": {
+    "title": "Mon Profil",
+    "avatarInfo": "Photo de profil disponible dans une future mise à jour",
+    "displayName": "Nom d'affichage",
+    "displayNamePlaceholder": "Votre nom complet",
+    "username": "Nom d'utilisateur",
+    "usernamePlaceholder": "votre_nom_utilisateur",
+    "email": "Adresse e-mail",
+    "emailReadOnly": "L'adresse e-mail ne peut pas être modifiée",
+    "country": "Pays",
+    "language": "Langue",
+    "accountInfo": "Informations du compte",
+    "memberSince": "Membre depuis",
+    "lastLogin": "Dernière connexion",
+    "plan": "Plan d'abonnement",
+    "provider": "Méthode de connexion",
+    "changePassword": "Changer le mot de passe",
+    "updateSuccess": "Profil mis à jour avec succès"
+  },
+  "countries": {
+    "US": "États-Unis",
+    "FR": "France",
+    "DE": "Allemagne",
+    "ES": "Espagne",
+    "IT": "Italie",
+    "GB": "Royaume-Uni",
+    "CA": "Canada",
+    "JP": "Japon",
+    "CN": "Chine"
+  },
+  "common": {
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "saving": "Enregistrement..."
+  },
+  "settings": {
+    "title": "Paramètres",
+    "appearance": {
+      "title": "Apparence",
+      "theme": "Thème",
+      "system": "Système",
+      "language": "Langue"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "email": "Notifications par e-mail",
+      "emailDescription": "Recevoir des notifications par e-mail pour les mises à jour importantes",
+      "browser": "Notifications du navigateur",
+      "browserDescription": "Recevoir des notifications push dans le navigateur",
+      "generation": "Notifications de génération",
+      "generationDescription": "Recevoir des notifications lorsque les générations sont terminées",
+      "permissionDenied": "Permission de notification refusée",
+      "permissionGranted": "Permission de notification accordée",
+      "notSupported": "Les notifications ne sont pas supportées par ce navigateur"
+    },
+    "privacy": {
+      "title": "Confidentialité et Sécurité",
+      "analytics": "Collecte de données analytiques",
+      "analyticsDescription": "Autoriser la collecte de données anonymes pour améliorer l'application",
+      "autosave": "Sauvegarde automatique",
+      "autosaveDescription": "Sauvegarder automatiquement vos paramètres et préférences"
+    },
+    "advanced": {
+      "title": "Paramètres avancés",
+      "clearCache": "Vider le cache",
+      "clearCacheDescription": "Supprimer les données temporaires stockées localement",
+      "clear": "Vider",
+      "exportData": "Exporter les données",
+      "exportDataDescription": "Télécharger vos paramètres et données au format JSON",
+      "export": "Exporter",
+      "cacheCleared": "Cache vidé avec succès",
+      "dataExported": "Données exportées avec succès"
+    },
+    "resetDefaults": "Réinitialiser par défaut",
+    "themeUpdated": "Thème mis à jour",
+    "languageUpdated": "Langue mise à jour",
+    "resetSuccess": "Paramètres réinitialisés aux valeurs par défaut",
+    "saveSuccess": "Paramètres sauvegardés avec succès"
   },
   "originalServices": {
     "providers": "Fournisseurs",
@@ -99,7 +242,48 @@
   "input": {
     "placeholder": "Entrer un prompte",
     "otherOptions": "Autres options(variable selon le modèle)",
-    "generate": "Générer"
+    "generate": "Générer",
+    "selectServicePrompt": "Sélectionnez un service pour commencer",
+    "supportedFormats": "Formats supportés",
+    "options": {
+      "title": "Options",
+      "aspectRatio": "Format d'image",
+      "duration": "Durée",
+      "style": "Style",
+      "motion": "Mouvement",
+      "size": "Taille",
+      "quality": "Qualité",
+      "strength": "Intensité",
+      "genre": "Genre",
+      "model": "Modèle",
+      "temperature": "Température",
+      "targetLanguage": "Langue cible",
+      "tone": "Ton",
+      "analysisType": "Type d'analyse"
+    },
+    "video": {
+      "textToVideoPlaceholder": "Décrivez la vidéo que vous souhaitez générer...",
+      "imageToVideoPlaceholder": "Glissez une image ou cliquez pour sélectionner"
+    },
+    "image": {
+      "textToImagePlaceholder": "Décrivez l'image que vous souhaitez générer...",
+      "imageToImagePlaceholder": "Glissez une image ou cliquez pour sélectionner",
+      "imageEditPrompt": "Décrivez les modifications à apporter à l'image..."
+    },
+    "music": {
+      "textToMusicPlaceholder": "Décrivez la musique que vous souhaitez générer...",
+      "generationPlaceholder": "Choisissez un style musical ou laissez l'IA décider..."
+    },
+    "llm": {
+      "chatPlaceholder": "Posez votre question ou décrivez votre tâche..."
+    },
+    "tools": {
+      "translationPlaceholder": "Entrez le texte à traduire...",
+      "visionPlaceholder": "Glissez une image ou cliquez pour sélectionner",
+      "visionPrompt": "Que voulez-vous savoir sur cette image ?",
+      "translationDescription": "Traduire des textes dans plusieurs langues",
+      "translationProviders": "DeepL, Google Translate, OpenAI..."
+    }
   },
   "welcome": {
     "title": "Vous avez réussi !",

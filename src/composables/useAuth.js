@@ -7,12 +7,15 @@ const loading = ref(false)
 export function useAuth() {
   const isAuthenticated = computed(() => !!user.value)
 
-  const signUp = async (email, password) => {
+  const signUp = async (email, password, metadata = {}) => {
     loading.value = true
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: metadata
+        }
       })
       if (error) throw error
       return { data, error: null }
