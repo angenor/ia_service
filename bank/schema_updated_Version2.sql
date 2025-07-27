@@ -597,4 +597,4 @@ INSERT INTO public.system_config (key, value, description) VALUES
 ('min_wallet_recharge', '500'::jsonb, 'Minimum points for wallet recharge'),
 ('new_service_days', '30'::jsonb, 'Days to show new badge on services'),
 ('api_rate_limit', '{"requests_per_minute": 60}'::jsonb, 'API rate limiting configuration'),
-('supported_countries', '["US", "FR", "CA", "GB", "DE", "JP", "BR", "IN"]'::jsonb, 'List of supported countries');
+('supported_countries', '["US", "CI", "FR", "CA", "GB", "DE", "JP", "BR", "IN"]'::jsonb, 'List of supported countries');

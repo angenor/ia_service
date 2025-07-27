@@ -1,133 +1,143 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Ce fichier fournit des directives à Claude Code (claude.ai/code) lors du travail sur le code de ce dépôt.
 
-## Project Overview
+## Vue d'ensemble du projet
 
-This is a Vue.js 3 application using Vite as the build tool. It's part of an AI SaaS platform (epavillon2025) that will provide centralized access to multiple AI services through a unified interface with a points-based system.
+Il s'agit d'une application Vue.js 3 utilisant Vite comme outil de build. Elle fait partie d'une plateforme SaaS d'IA (epavillon2025) qui fournira un accès centralisé à plusieurs services d'IA via une interface unifiée avec un système de points.
 
-## Key Technologies
+**IMPORTANT**: Pour comprendre le projet en détail, consulter le cahier des charges complet dans `bank/conception-saas-ia-centralise-finale.md`. Pour comprendre le modèle de données, consulter le schéma de base de données dans `bank/schema_updated_Version2.sql`.
 
-- **Frontend**: Vue.js 3 with Composition API
-- **Build Tool**: Vite
-- **Routing**: Vue Router 4 
-- **State Management**: Pinia
-- **Styling**: Tailwind CSS 4 with Dark/Light mode support
-- **Internationalization**: Vue i18n (French/English)
-- **Icons**: Font Awesome
-- **Testing**: Vitest (unit tests), Playwright (e2e tests)
-- **Dev Tools**: Vue DevTools plugin enabled
+## Technologies clés
 
-## Development Commands
+- **Frontend**: Vue.js 3 avec Composition API
+- **Backend**: Supabase (PostgreSQL avec Row Level Security)
+- **Outil de build**: Vite
+- **Routage**: Vue Router 4 
+- **Gestion d'état**: Pinia
+- **Styles**: Tailwind CSS 4 avec support mode sombre/clair
+- **Internationalisation**: Vue i18n (Français/Anglais)
+- **Icônes**: Font Awesome
+- **Tests**: Vitest (tests unitaires), Playwright (tests e2e)
+- **Outils de dev**: Plugin Vue DevTools activé
 
-### Essential Commands
+## Commandes de développement
+
+### Commandes essentielles
 ```bash
-# Install dependencies
+# Installer les dépendances
 npm install
 
-# Start development server (http://localhost:5173)
+# Démarrer le serveur de développement (http://localhost:5173)
 npm run dev
 
-# Build for production
+# Build pour la production
 npm run build
 
-# Preview production build (http://localhost:4173)
+# Prévisualiser le build de production (http://localhost:4173)
 npm run preview
 
-# Run unit tests with Vitest
+# Exécuter les tests unitaires avec Vitest
 npm run test:unit
 
-# Run e2e tests with Playwright
+# Exécuter les tests e2e avec Playwright
 npm run test:e2e
 
-# Install Playwright browsers (first time setup)
+# Installer les navigateurs Playwright (première configuration)
 npx playwright install
 ```
 
-### Testing Commands
+### Commandes de test
 ```bash
-# Run e2e tests on specific browser
+# Exécuter les tests e2e sur un navigateur spécifique
 npm run test:e2e -- --project=chromium
 
-# Run specific e2e test file
+# Exécuter un fichier de test e2e spécifique
 npm run test:e2e -- tests/example.spec.ts
 
-# Run e2e tests in debug mode
+# Exécuter les tests e2e en mode debug
 npm run test:e2e -- --debug
 ```
 
-## Project Structure
+## Structure du projet
 
-### Core Architecture
-- **Entry Point**: `src/main.js` - Initializes Vue app with Pinia, router, i18n, and Font Awesome
-- **Root Component**: `src/App.vue` - Contains responsive header with navigation, theme toggle, language selector, and router outlet
-- **Routing**: `src/router/index.js` - Defines app routes with lazy loading for About page
-- **State Management**: `src/stores/` - Pinia stores (counter, theme, locale)
+### Architecture principale
+- **Point d'entrée**: `src/main.js` - Initialise l'app Vue avec Pinia, router, i18n, et Font Awesome
+- **Composant racine**: `src/App.vue` - Contient l'en-tête responsive avec navigation, toggle de thème, sélecteur de langue, et outlet du router
+- **Routage**: `src/router/index.js` - Définit les routes de l'app avec lazy loading pour la page About
+- **Gestion d'état**: `src/stores/` - Stores Pinia (counter, theme, locale)
 
-### Key Directories
-- `src/components/` - Reusable Vue components including `ui/` subfolder for UI components (ThemeToggle, LanguageSelector)
-- `src/views/` - Page-level components, includes `admin/` subfolder
-- `src/assets/` - Static assets including Tailwind CSS configuration with dark mode support
-- `src/lib/` - Utility libraries
-- `src/utils/` - Utility functions
-- `src/plugins/` - Vue plugins (i18n, Font Awesome configuration)
-- `src/stores/` - Pinia stores (theme.js for dark/light mode, locale.js for language management, counter.js)
-- `src/locales/` - Internationalization files (en.json, fr.json)
-- `e2e/` - Playwright end-to-end tests
-- `bank/` - Project documentation and database schema
+### Répertoires clés
+- `src/components/` - Composants Vue réutilisables incluant le sous-dossier `ui/` pour les composants UI (ThemeToggle, LanguageSelector)
+- `src/views/` - Composants au niveau page, inclut le sous-dossier `admin/`
+- `src/assets/` - Assets statiques incluant la configuration Tailwind CSS avec support du mode sombre
+- `src/lib/` - Bibliothèques utilitaires
+- `src/utils/` - Fonctions utilitaires
+- `src/plugins/` - Plugins Vue (i18n, configuration Font Awesome)
+- `src/stores/` - Stores Pinia (theme.js pour mode sombre/clair, locale.js pour gestion des langues, counter.js)
+- `src/locales/` - Fichiers d'internationalisation (en.json, fr.json)
+- `e2e/` - Tests end-to-end Playwright
+- `bank/` - Documentation du projet et schéma de base de données
 
-### Configuration Files
-- `vite.config.js` - Vite configuration with Vue plugin and @ alias for src/
-- `vitest.config.js` - Unit test configuration using jsdom environment
-- `playwright.config.js` - E2e test configuration for multi-browser testing
-- `tailwind.config.js` - Tailwind CSS 4 configuration with custom primary colors
-- `src/assets/main.css` - Main CSS with Tailwind imports and dark mode custom variant
+### Fichiers de configuration
+- `vite.config.js` - Configuration Vite avec plugin Vue et alias @ pour src/
+- `vitest.config.js` - Configuration des tests unitaires utilisant l'environnement jsdom
+- `playwright.config.js` - Configuration des tests e2e pour tests multi-navigateurs
+- `tailwind.config.js` - Configuration Tailwind CSS 4 avec couleurs primaires personnalisées
+- `src/assets/main.css` - CSS principal avec imports Tailwind et variant personnalisé mode sombre
 
-## Development Notes
+## Notes de développement
 
-### Path Aliases
-- `@` is aliased to `src/` directory
+### Alias de chemins
+- `@` est un alias vers le répertoire `src/`
 
-### Dark/Light Mode Implementation
-- Uses Tailwind CSS 4 custom variant: `@custom-variant dark (&:where(.dark, .dark *))`
-- Theme management via Pinia store (`src/stores/theme.js`)
-- Persists theme preference in localStorage
-- Respects system preferences by default
-- Theme toggle component in header (`src/components/ui/ThemeToggle.vue`)
-- **IMPORTANT**: Always use `dark:` classes for dark mode styling in all components
+### Implémentation mode sombre/clair
+- Utilise la variante personnalisée Tailwind CSS 4: `@custom-variant dark (&:where(.dark, .dark *))`
+- Gestion du thème via store Pinia (`src/stores/theme.js`)
+- Persiste la préférence de thème dans localStorage
+- Respecte les préférences système par défaut
+- Composant toggle de thème dans l'en-tête (`src/components/ui/ThemeToggle.vue`)
+- **IMPORTANT**: Toujours utiliser les classes `dark:` pour le style en mode sombre dans tous les composants
 
-### Internationalization (i18n)
-- Supports French (`fr`) and English (`en`) 
-- Managed via Vue i18n and Pinia store (`src/stores/locale.js`)
-- Language files in `src/locales/` (en.json, fr.json)
-- Persists language preference in localStorage
-- Language selector component in header (`src/components/ui/LanguageSelector.vue`)
-- **IMPORTANT**: Always use `$t('key')` for all text content in components
+### Internationalisation (i18n)
+- Supporte le français (`fr`) et l'anglais (`en`) 
+- Géré via Vue i18n et store Pinia (`src/stores/locale.js`)
+- Fichiers de langue dans `src/locales/` (en.json, fr.json)
+- Persiste la préférence de langue dans localStorage
+- Composant sélecteur de langue dans l'en-tête (`src/components/ui/LanguageSelector.vue`)
+- **IMPORTANT**: Toujours utiliser `$t('key')` pour tout contenu texte dans les composants
 
 ### Font Awesome
-- Configured globally via `src/plugins/fontawesome.js`
-- Available icons: sun, moon, globe, chevron-up, chevron-down, home, info-circle
-- Use as: `<font-awesome-icon icon="icon-name" />`
+- Configuré globalement via `src/plugins/fontawesome.js`
+- Icônes disponibles: sun, moon, globe, chevron-up, chevron-down, home, info-circle
+- Utilisation: `<font-awesome-icon icon="icon-name" />`
 
-### Component Development Guidelines
-- **Always include dark mode styling**: Use `dark:` variants for all background, text, and border colors
-- **Always use i18n**: Replace hardcoded text with `$t('translation.key')`
-- **Follow responsive design**: Use Tailwind responsive classes
-- **Maintain consistency**: Follow existing patterns in `src/components/ui/`
+### Directives de développement de composants
+- **Toujours inclure le style mode sombre**: Utiliser les variantes `dark:` pour toutes les couleurs de fond, texte et bordures
+- **Toujours utiliser i18n**: Remplacer le texte codé en dur par `$t('translation.key')`
+- **Suivre le design responsive**: Utiliser les classes responsive Tailwind
+- **Maintenir la cohérence**: Suivre les modèles existants dans `src/components/ui/`
 
-### Testing Setup
-- Unit tests use Vitest with jsdom environment
-- E2e tests use Playwright with automatic dev server startup
-- E2e tests run on Chromium, Firefox, and WebKit
-- CI configuration included for both test suites
+### Configuration des tests
+- Les tests unitaires utilisent Vitest avec environnement jsdom
+- Les tests e2e utilisent Playwright avec démarrage automatique du serveur de dev
+- Les tests e2e s'exécutent sur Chromium, Firefox, et WebKit
+- Configuration CI incluse pour les deux suites de tests
 
-### Future Architecture
-Based on project documentation, this is planned to be part of a larger AI SaaS platform that will:
-- Use Supabase for backend (PostgreSQL with RLS)
-- Integrate multiple AI service APIs (OpenRouter, fal.ai)
-- Include Flutter mobile app
-- Implement points-based payment system
-- Support multi-country deployment
+### Architecture future
+Basé sur la documentation du projet, ceci est planifié pour faire partie d'une plateforme SaaS d'IA plus large qui:
+- Utilisera Supabase pour le backend (PostgreSQL avec RLS)
+- Intégrera plusieurs APIs de services d'IA (OpenRouter, fal.ai)
+- Inclura une app mobile Flutter
+- Implémentera un système de paiement basé sur les points
+- Supportera le déploiement multi-pays
 
-### Current State
-The project appears to be in early development stage with standard Vue 3 starter template structure. The banking documentation suggests this will evolve into a comprehensive AI services platform.
+### État actuel
+Le projet est en phase de développement précoce avec l'architecture Vue 3 et un composant AppSideBar implémenté. Le schéma de base de données et l'architecture sont définis pour l'intégration backend Supabase. Ceci évoluera vers une plateforme complète de services d'IA avec facturation basée sur les points et intégration multi-services.
+
+### Intégration backend
+- **Base de données**: PostgreSQL avec Supabase
+- **Authentification**: Supabase Auth avec OAuth Google/Apple et email/mot de passe
+- **Temps réel**: Abonnements temps réel Supabase pour mises à jour en direct
+- **Row Level Security**: Implémenté pour accès sécurisé aux données multi-locataires
+- **API**: Client Supabase pour opérations de base de données et fonctionnalités temps réel

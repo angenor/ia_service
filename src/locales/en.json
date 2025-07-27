@@ -1,4 +1,10 @@
 {
+  "app": {
+    "name": "AIPlatform"
+  },
+  "header": {
+    "searchPlaceholder": "Search for a model..."
+  },
   "nav": {
     "home": "Home",
     "about": "About"
@@ -12,6 +18,88 @@
     "select": "Select language",
     "english": "English",
     "french": "Français"
+  },
+  "sidebar": {
+    "quickAction": "Quick Action",
+    "search": "Search",
+    "aiPlayground": "AI Playground",
+    "profile": "Profile", 
+    "about": "About",
+    "contact": "Contact"
+  },
+  "services": {
+    "categories": {
+      "video": "Video",
+      "image": "Images", 
+      "music": "Music",
+      "llm": "LLMs",
+      "tools": "Tools"
+    },
+    "video": {
+      "textToVideo": "Text to Video",
+      "imageToVideo": "Image to Video"
+    },
+    "image": {
+      "textToImage": "Text to Image", 
+      "imageToImage": "Image to Image"
+    },
+    "music": {
+      "textToMusic": "Text to Music",
+      "generation": "Generation"
+    },
+    "llm": {
+      "chatgpt": "ChatGPT",
+      "claude": "Claude Sonnet",
+      "gemini": "Gemini"
+    },
+    "tools": {
+      "translation": "Translation",
+      "vision": "Vision Analysis"
+    }
+  },
+  "user": {
+    "profile": "User Profile",
+    "plan": {
+      "free": "Free"
+    }
+  },
+  "originalServices": {
+    "providers": "Providers",
+    "videoGeneration": {
+      "title": "Generate Videos",
+      "description": "Generate videos of any style from text or image",
+      "providers": "Voe 3, MidJourney, MiniMax, Kling 2.1 Master..."
+    },
+    "chatBot": {
+      "title": "ChatBot LLM",
+      "description": "Use the most powerful chatbots of the moment...",
+      "providers": "ChatGPT 4.5, Claude opus/sonnet 4, Gemini 2.5 pro..."
+    },
+    "imageGeneration": {
+      "title": "Generate & Modify Images",
+      "description": "Create realistic, artistic, animated videos...",
+      "providers": "DALL-E 3 (OpenAI), MidJourney, MiniMax, Stable Diffusion XL..."
+    },
+    "textToAudio": {
+      "title": "Text to Audio",
+      "description": "Generate ultra-realistic audio/music from text, clone voices...",
+      "providers": "ElevenLabs, MiniMax..."
+    },
+    "audioToText": {
+      "title": "Audio to Text",
+      "description": "Generate texts from audio...",
+      "providers": "ElevenLabs, MiniMax..."
+    },
+    "agent": {
+      "title": "Agent",
+      "description": "Doctor, Lawyer, Legal expert, data analysis, CV writing...",
+      "providers": "ChatGPT 4.5, Claude Opus 4..."
+    }
+  },
+  "input": {
+    "placeholder": "Enter a prompt",
+    "otherOptions": "Other options (variable by model)",
+    "generate": "Generate"
   },
   "welcome": {
     "title": "You did it!",

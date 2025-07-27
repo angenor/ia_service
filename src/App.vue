@@ -4,6 +4,7 @@ import { RouterLink, RouterView } from 'vue-router'
 import HelloWorld from './components/HelloWorld.vue'
 import ThemeToggle from './components/ui/ThemeToggle.vue'
 import LanguageSelector from './components/ui/LanguageSelector.vue'
+import AppSideBar from './components/AppSideBar.vue'
 import { useThemeStore } from './stores/theme'
 import { useLocaleStore } from './stores/locale'
 
@@ -18,46 +19,55 @@ onMounted(() => {
 
 <template>
   <div class="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
-    <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center py-4">
-          <div class="flex items-center space-x-4">
-            <img alt="Vue logo" class="logo w-12 h-12" src="@/assets/logo.svg" />
-            <nav class="flex space-x-6">
-              <RouterLink 
-                to="/" 
-                class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200"
-                :class="{ 'text-primary-600 dark:text-primary-400 font-semibold': $route.path === '/' }"
-              >
-                <font-awesome-icon icon="home" class="w-4 h-4 mr-2" />
-                {{ $t('nav.home') }}
-              </RouterLink>
-              <RouterLink 
-                to="/about" 
-                class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200"
-                :class="{ 'text-primary-600 dark:text-primary-400 font-semibold': $route.path === '/about' }"
-              >
-                <font-awesome-icon icon="info-circle" class="w-4 h-4 mr-2" />
-                {{ $t('nav.about') }}
-              </RouterLink>
-            </nav>
-          </div>
-          
-          <div class="flex items-center space-x-4">
-            <HelloWorld :msg="$t('welcome.title')" />
-          </div>
-          
-          <div class="flex items-center space-x-3">
-            <LanguageSelector />
-            <ThemeToggle />
+    <!-- Sidebar -->
+    <AppSideBar />
+    
+    <!-- Main Content Area -->
+    <div class="ml-64">
+      <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex justify-between items-center py-4">
+            
+            <!-- Search Bar -->
+            <div class="flex-1 max-w-lg">
+              <div class="relative">
+                <font-awesome-icon icon="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input 
+                  type="text" 
+                  :placeholder="$t('header.searchPlaceholder')"
+                  class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-full bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+              <!-- Wallet Points -->
+              <div class="flex items-center space-x-2 px-3 py-1 bg-yellow-100 dark:bg-yellow-900/20 rounded-full">
+                <span class="text-sm font-medium text-gray-900 dark:text-white">1230 points</span>
+                <font-awesome-icon icon="coins" class="text-yellow-500" />
+              </div>
+              
+              <!-- User Profile -->
+              <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
+                  <font-awesome-icon icon="user" class="text-white text-sm" />
+                </div>
+              </div>
+              
+              <!-- Theme and Language -->
+              <div class="flex items-center space-x-2">
+                <LanguageSelector />
+                <ThemeToggle />
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </header>
+      </header>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <RouterView />
-    </main>
+      <main class="px-6 py-8">
+        <RouterView />
+      </main>
+    </div>
   </div>
 </template>
 
