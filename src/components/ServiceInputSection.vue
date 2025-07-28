@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-4xl mx-auto">
+  <div class="max-w-4xl mx-auto shadow-2xl rounded-2xl">
     <!-- Service Selection Info -->
     <div v-if="!serviceStore.isServiceSelected" class="text-center py-16">
       <font-awesome-icon icon="wand-magic-sparkles" class="text-4xl text-gray-400 dark:text-gray-600 mb-4" />
@@ -25,9 +25,11 @@
           <textarea 
             v-if="config?.mainInput?.type === 'textarea'"
             v-model="mainInputValue"
-            :placeholder="$t(config.mainInput.placeholder)"
+            :placeholder="dynamicPlaceholder"
             :rows="1"
             @input="autoResize"
+            @focus="pauseTypewriter"
+            @blur="resumeTypewriter"
             ref="textareaRef"
             class="w-full p-0 border-0 resize-none text-lg bg-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-0 leading-relaxed min-h-[2rem]"
           ></textarea>
@@ -165,7 +167,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useServiceStore } from '@/stores/service'
 import { useI18n } from 'vue-i18n'
 
@@ -179,8 +181,110 @@ const uploadedFile = ref(null)
 const filePreview = ref(null)
 const textareaRef = ref(null)
 
+// Typewriter effect state
+const dynamicPlaceholder = ref('')
+const currentPlaceholderIndex = ref(0)
+const currentCharIndex = ref(0)
+const isTyping = ref(true)
+const isPaused = ref(false)
+let typewriterInterval = null
+let placeholderRotationTimeout = null
+
+// Clés i18n pour les exemples de prompts par service
+const servicePromptKeys = {
+  text: {
+    chatbot: [
+      "placeholders.text.chatbot.example1",
+      "placeholders.text.chatbot.example2",
+      "placeholders.text.chatbot.example3"
+    ],
+    translator: [
+      "placeholders.text.translator.example1",
+      "placeholders.text.translator.example2",
+      "placeholders.text.translator.example3"
+    ],
+    writer: [
+      "placeholders.text.writer.example1",
+      "placeholders.text.writer.example2",
+      "placeholders.text.writer.example3"
+    ]
+  },
+  image: {
+    generator: [
+      "placeholders.image.generator.example1",
+      "placeholders.image.generator.example2",
+      "placeholders.image.generator.example3"
+    ],
+    editor: [
+      "placeholders.image.editor.example1",
+      "placeholders.image.editor.example2",
+      "placeholders.image.editor.example3"
+    ],
+    upscaler: [
+      "placeholders.image.upscaler.example1",
+      "placeholders.image.upscaler.example2",
+      "placeholders.image.upscaler.example3"
+    ]
+  },
+  audio: {
+    generator: [
+      "placeholders.audio.generator.example1",
+      "placeholders.audio.generator.example2",
+      "placeholders.audio.generator.example3"
+    ],
+    transcriber: [
+      "placeholders.audio.transcriber.example1",
+      "placeholders.audio.transcriber.example2",
+      "placeholders.audio.transcriber.example3"
+    ]
+  },
+  video: {
+    generator: [
+      "placeholders.video.generator.example1",
+      "placeholders.video.generator.example2",
+      "placeholders.video.generator.example3"
+    ],
+    editor: [
+      "placeholders.video.editor.example1",
+      "placeholders.video.editor.example2",
+      "placeholders.video.editor.example3"
+    ]
+  }
+}
+
 // Config actuelle
 const config = computed(() => serviceStore.currentConfig)
+
+// Computed pour les prompts du service actuel
+const currentServicePrompts = computed(() => {
+  if (!serviceStore.selectedCategory || !serviceStore.selectedService) {
+    return [
+      t("placeholders.default.example1"),
+      t("placeholders.default.example2"), 
+      t("placeholders.default.example3")
+    ]
+  }
+  
+  const categoryPrompts = servicePromptKeys[serviceStore.selectedCategory]
+  if (!categoryPrompts) {
+    return [
+      t("placeholders.fallback.example1"),
+      t("placeholders.fallback.example2"),
+      t("placeholders.fallback.example3")
+    ]
+  }
+  
+  const servicePromptsList = categoryPrompts[serviceStore.selectedService]
+  if (!servicePromptsList) {
+    return [
+      t("placeholders.fallback.example1"),
+      t("placeholders.fallback.example2"),
+      t("placeholders.fallback.example3")
+    ]
+  }
+  
+  return servicePromptsList.map(key => t(key))
+})
 
 // Computed
 const canGenerate = computed(() => {
@@ -242,6 +346,90 @@ const autoResize = () => {
   }
 }
 
+// Typewriter effect functions
+const startTypewriter = () => {
+  if (isPaused.value || !currentServicePrompts.value.length) return
+  
+  const currentPrompts = currentServicePrompts.value
+  const currentPrompt = currentPrompts[currentPlaceholderIndex.value]
+  
+  if (isTyping.value) {
+    // Typing phase
+    if (currentCharIndex.value < currentPrompt.length) {
+      dynamicPlaceholder.value = currentPrompt.substring(0, currentCharIndex.value + 1)
+      currentCharIndex.value++
+    } else {
+      // Finished typing, wait then start erasing
+      isTyping.value = false
+      placeholderRotationTimeout = setTimeout(() => {
+        if (!isPaused.value) {
+          isTyping.value = false
+        }
+      }, 2000) // Wait 2 seconds before erasing
+    }
+  } else {
+    // Erasing phase
+    if (currentCharIndex.value > 0) {
+      currentCharIndex.value--
+      dynamicPlaceholder.value = currentPrompt.substring(0, currentCharIndex.value)
+    } else {
+      // Finished erasing, move to next prompt
+      currentPlaceholderIndex.value = (currentPlaceholderIndex.value + 1) % currentPrompts.length
+      isTyping.value = true
+      // Small pause before starting to type the next prompt
+      placeholderRotationTimeout = setTimeout(() => {
+        if (!isPaused.value) {
+          isTyping.value = true
+        }
+      }, 500)
+    }
+  }
+}
+
+const pauseTypewriter = () => {
+  isPaused.value = true
+  if (typewriterInterval) {
+    clearInterval(typewriterInterval)
+    typewriterInterval = null
+  }
+  if (placeholderRotationTimeout) {
+    clearTimeout(placeholderRotationTimeout)
+    placeholderRotationTimeout = null
+  }
+}
+
+const resumeTypewriter = () => {
+  if (mainInputValue.value.trim() === '') {
+    isPaused.value = false
+    startTypewriterLoop()
+  }
+}
+
+const startTypewriterLoop = () => {
+  if (typewriterInterval) clearInterval(typewriterInterval)
+  typewriterInterval = setInterval(startTypewriter, 100) // Adjust speed here
+}
+
+const resetTypewriter = () => {
+  currentPlaceholderIndex.value = 0
+  currentCharIndex.value = 0
+  isTyping.value = true
+  dynamicPlaceholder.value = ''
+  
+  if (typewriterInterval) {
+    clearInterval(typewriterInterval)
+    typewriterInterval = null
+  }
+  if (placeholderRotationTimeout) {
+    clearTimeout(placeholderRotationTimeout)
+    placeholderRotationTimeout = null
+  }
+  
+  if (!isPaused.value) {
+    startTypewriterLoop()
+  }
+}
+
 const handleGenerate = () => {
   // TODO: Implémenter la génération
   console.log('Generate with:', {
@@ -251,6 +439,15 @@ const handleGenerate = () => {
     options: serviceStore.generationOptions
   })
 }
+
+// Lifecycle
+onMounted(() => {
+  startTypewriterLoop()
+})
+
+onUnmounted(() => {
+  pauseTypewriter()
+})
 
 // Réinitialiser les inputs quand le service change
 watch(() => serviceStore.isServiceSelected, (isSelected) => {
@@ -262,8 +459,20 @@ watch(() => serviceStore.isServiceSelected, (isSelected) => {
   }
 })
 
+// Reset typewriter when service changes
+watch(() => [serviceStore.selectedCategory, serviceStore.selectedService], () => {
+  resetTypewriter()
+})
+
 // Auto-resize du textarea quand le contenu change
 watch(mainInputValue, () => {
   setTimeout(autoResize, 0)
+  
+  // Pause typewriter when user is typing
+  if (mainInputValue.value.trim() !== '') {
+    pauseTypewriter()
+  } else if (!isPaused.value) {
+    resumeTypewriter()
+  }
 })
 </script>

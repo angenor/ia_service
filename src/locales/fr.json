@@ -285,6 +285,76 @@
       "translationProviders": "DeepL, Google Translate, OpenAI..."
     }
   },
+  "placeholders": {
+    "default": {
+      "example1": "Sélectionnez un service pour commencer...",
+      "example2": "Explorez nos outils d'IA",
+      "example3": "Créez du contenu incroyable"
+    },
+    "fallback": {
+      "example1": "Commencez à taper votre demande...",
+      "example2": "Décrivez ce que vous souhaitez créer",
+      "example3": "Laissez libre cours à votre créativité"
+    },
+    "text": {
+      "chatbot": {
+        "example1": "Explique-moi les bases de la programmation JavaScript",
+        "example2": "Comment créer une stratégie marketing pour une startup ?",
+        "example3": "Aide-moi à rédiger un email professionnel"
+      },
+      "translator": {
+        "example1": "Traduis ce texte en anglais : Bonjour, comment allez-vous ?",
+        "example2": "Comment dit-on 'intelligence artificielle' en espagnol ?",
+        "example3": "Traduis cette phrase technique en français"
+      },
+      "writer": {
+        "example1": "Écris une histoire courte sur un chat qui découvre la magie",
+        "example2": "Rédige un article de blog sur les tendances tech 2024",
+        "example3": "Crée un poème inspirant sur l'amitié"
+      }
+    },
+    "image": {
+      "generator": {
+        "example1": "Un chat tigré jouant avec une balle dans un champ d'herbe",
+        "example2": "Paysage de montagne au coucher du soleil, style aquarelle",
+        "example3": "Portrait futuriste d'un robot bienveillant, art numérique"
+      },
+      "editor": {
+        "example1": "Supprime l'arrière-plan et remplace-le par un ciel étoilé",
+        "example2": "Améliore les couleurs et la luminosité de cette photo",
+        "example3": "Ajoute des effets de lumière dorée à cette image"
+      },
+      "upscaler": {
+        "example1": "Améliore la résolution de cette photo de famille vintage",
+        "example2": "Augmente la qualité de cette image de logo pixelisée",
+        "example3": "Restaure et agrandit cette vieille photographie"
+      }
+    },
+    "audio": {
+      "generator": {
+        "example1": "Crée une mélodie douce de 30 secondes pour la méditation",
+        "example2": "Génère un jingle publicitaire énergique pour une boulangerie",
+        "example3": "Compose une musique d'ambiance cyberpunk"
+      },
+      "transcriber": {
+        "example1": "Transcris cette réunion et identifie les points clés",
+        "example2": "Convertis cet audio en texte avec les timestamps",
+        "example3": "Transcris cette interview et résume les idées principales"
+      }
+    },
+    "video": {
+      "generator": {
+        "example1": "Crée une animation de 10 secondes d'un logo qui apparaît",
+        "example2": "Génère une vidéo de présentation pour mon produit",
+        "example3": "Anime ce personnage qui fait un geste de salut"
+      },
+      "editor": {
+        "example1": "Découpe cette vidéo et garde seulement les moments importants",
+        "example2": "Ajoute des sous-titres automatiques à cette présentation",
+        "example3": "Crée un montage dynamique avec ces clips vidéo"
+      }
+    }
+  },
   "welcome": {
     "title": "Vous avez réussi !",
     "message": "Bienvenue dans votre application Vue.js"

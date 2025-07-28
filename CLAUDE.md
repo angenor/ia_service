@@ -124,6 +124,10 @@ npm run test:e2e -- --debug
 - Les tests e2e s'exécutent sur Chromium, Firefox, et WebKit
 - Configuration CI incluse pour les deux suites de tests
 
+### APIs de services d'IA
+- **LLMs**: OpenRouter API (https://openrouter.ai/docs/api-reference/overview)
+- **Autres modèles**: Fal API (https://docs.fal.ai/)
+
 ### Architecture future
 Basé sur la documentation du projet, ceci est planifié pour faire partie d'une plateforme SaaS d'IA plus large qui:
 - Utilisera Supabase pour le backend (PostgreSQL avec RLS)

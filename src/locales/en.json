@@ -285,6 +285,76 @@
       "translationProviders": "DeepL, Google Translate, OpenAI..."
     }
   },
+  "placeholders": {
+    "default": {
+      "example1": "Select a service to get started...",
+      "example2": "Explore our AI tools",
+      "example3": "Create amazing content"
+    },
+    "fallback": {
+      "example1": "Start typing your request...",
+      "example2": "Describe what you want to create",
+      "example3": "Let your creativity flow"
+    },
+    "text": {
+      "chatbot": {
+        "example1": "Explain the basics of JavaScript programming",
+        "example2": "How to create a marketing strategy for a startup?",
+        "example3": "Help me write a professional email"
+      },
+      "translator": {
+        "example1": "Translate this text to English: Bonjour, comment allez-vous ?",
+        "example2": "How do you say 'artificial intelligence' in Spanish?",
+        "example3": "Translate this technical phrase to French"
+      },
+      "writer": {
+        "example1": "Write a short story about a cat discovering magic",
+        "example2": "Write a blog article about tech trends 2024",
+        "example3": "Create an inspiring poem about friendship"
+      }
+    },
+    "image": {
+      "generator": {
+        "example1": "A tabby cat playing with a ball in a grassy field",
+        "example2": "Mountain landscape at sunset, watercolor style",
+        "example3": "Futuristic portrait of a benevolent robot, digital art"
+      },
+      "editor": {
+        "example1": "Remove background and replace with starry sky",
+        "example2": "Enhance colors and brightness of this photo",
+        "example3": "Add golden light effects to this image"
+      },
+      "upscaler": {
+        "example1": "Improve resolution of this vintage family photo",
+        "example2": "Increase quality of this pixelated logo image",
+        "example3": "Restore and enlarge this old photograph"
+      }
+    },
+    "audio": {
+      "generator": {
+        "example1": "Create a gentle 30-second melody for meditation",
+        "example2": "Generate an energetic advertising jingle for a bakery",
+        "example3": "Compose cyberpunk ambient music"
+      },
+      "transcriber": {
+        "example1": "Transcribe this meeting and identify key points",
+        "example2": "Convert this audio to text with timestamps",
+        "example3": "Transcribe this interview and summarize main ideas"
+      }
+    },
+    "video": {
+      "generator": {
+        "example1": "Create a 10-second animation of a logo appearing",
+        "example2": "Generate a presentation video for my product",
+        "example3": "Animate this character making a greeting gesture"
+      },
+      "editor": {
+        "example1": "Cut this video and keep only important moments",
+        "example2": "Add automatic subtitles to this presentation",
+        "example3": "Create a dynamic montage with these video clips"
+      }
+    }
+  },
   "welcome": {
     "title": "You did it!",
     "message": "Welcome to your Vue.js application"
