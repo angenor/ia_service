@@ -16,7 +16,11 @@ app.use(router)
 app.use(i18n)
 app.component('font-awesome-icon', FontAwesomeIcon)
 
-app.mount('#app')
+// Initialiser l'authentification avant de monter l'app
+async function initApp() {
+  const authStore = useAuthStore()
+  await authStore.initialize()
+  app.mount('#app')
+}
 
-const authStore = useAuthStore()
-authStore.initialize()
+initApp()

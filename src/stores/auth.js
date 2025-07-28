@@ -26,19 +26,24 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const { supabase } = await import('@/lib/supabase')
       
+      console.log('Chargement du profil pour utilisateur:', user.value.id)
+      
       // Tentative avec RPC pour éviter les problèmes RLS
       const { data: rpcData, error: rpcError } = await supabase
         .rpc('get_user_profile', { user_id: user.value.id })
       
-      if (!rpcError && rpcData) {
-        userProfile.value = rpcData[0] || null
+      if (!rpcError && rpcData && rpcData.length > 0) {
+        userProfile.value = rpcData[0]
+        console.log('Profil chargé via RPC:', userProfile.value)
         return userProfile.value
       }
       
-      // Fallback: essayer la requête normale
+      console.log('RPC error ou pas de données, tentative avec requête normale:', rpcError)
+      
+      // Fallback: essayer la requête normale avec select explicite
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, username, display_name, country_code, language_code, created_at, updated_at, is_admin, metadata')
         .eq('id', user.value.id)
         .maybeSingle()
       
@@ -52,17 +57,20 @@ export const useAuthStore = defineStore('auth', () => {
             display_name: user.value.user_metadata?.full_name || user.value.email?.split('@')[0],
             country_code: 'US',
             language_code: 'fr',
+            is_admin: false, // Par défaut, pas admin
             metadata: {
               email: user.value.email,
               provider: user.value.app_metadata?.provider
             }
           }
+          console.log('Profil fallback créé:', userProfile.value)
           return userProfile.value
         }
         throw error
       }
       
       userProfile.value = data
+      console.log('Profil chargé via requête normale:', userProfile.value)
       return data
     } catch (error) {
       console.error('Error fetching user profile:', error)
@@ -119,9 +127,12 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const initialize = async () => {
+    console.log('Initialisation du store auth...')
     await initAuth()
+    console.log('Utilisateur après initAuth:', !!user.value)
     if (user.value) {
       await getUserProfile()
+      console.log('Profil chargé lors de l\'initialisation:', !!userProfile.value)
     }
   }
 
@@ -136,6 +147,7 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     user,
     userProfile: computed(() => userProfile.value),
+    profile: computed(() => userProfile.value), // Alias pour compatibilité
     loading,
     profileLoading: computed(() => profileLoading.value),
     isAuthenticated,

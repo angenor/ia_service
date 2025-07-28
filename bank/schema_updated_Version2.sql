@@ -284,15 +284,27 @@ ALTER TABLE public.promotion_usage ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.price_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.system_config ENABLE ROW LEVEL SECURITY;
 
--- Policies pour les utilisateurs
-CREATE POLICY "Users can view own profile" ON public.profiles
+-- Policies pour les utilisateurs (noms simplifiés et non récursifs)
+CREATE POLICY "profiles_select_own" ON public.profiles
     FOR SELECT USING (auth.uid() = id);
 
-CREATE POLICY "Users can update own profile" ON public.profiles
-    FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "profiles_insert_own" ON public.profiles
+    FOR INSERT WITH CHECK (auth.uid() = id);
 
-CREATE POLICY "Users can view own wallet" ON public.wallets
-    FOR SELECT USING (user_id = auth.uid());
+CREATE POLICY "profiles_update_own" ON public.profiles
+    FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "profiles_delete_own" ON public.profiles
+    FOR DELETE USING (auth.uid() = id);
+
+CREATE POLICY "wallets_select_own" ON public.wallets
+    FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "wallets_insert_own" ON public.wallets
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "wallets_update_own" ON public.wallets
+    FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Users can view active services" ON public.ai_services
     FOR SELECT USING (is_active = true);
@@ -403,6 +415,67 @@ CREATE TRIGGER create_wallet_on_profile_insert
     AFTER INSERT ON public.profiles
     FOR EACH ROW EXECUTE FUNCTION create_user_wallet();
 
+-- Fonction pour créer automatiquement un profil utilisateur lors de l'inscription
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO public.profiles (
+        id,
+        username,
+        display_name,
+        country_code,
+        language_code,
+        metadata
+    ) VALUES (
+        NEW.id,
+        NEW.email,
+        COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1)),
+        COALESCE(NEW.raw_user_meta_data->>'country_code', 'US'),
+        COALESCE(NEW.raw_user_meta_data->>'language_code', 'fr'),
+        jsonb_build_object(
+            'email', NEW.email,
+            'phone', COALESCE(NEW.phone, ''),
+            'provider', NEW.raw_app_meta_data->>'provider',
+            'providers', NEW.raw_app_meta_data->'providers'
+        )
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger pour exécuter la fonction lors de la création d'un nouvel utilisateur
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW
+    EXECUTE FUNCTION public.handle_new_user();
+
+-- Fonction pour mettre à jour le profil lors de la mise à jour des données auth
+CREATE OR REPLACE FUNCTION public.handle_user_update()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE public.profiles
+    SET
+        display_name = COALESCE(NEW.raw_user_meta_data->>'full_name', display_name),
+        metadata = metadata || jsonb_build_object(
+            'email', NEW.email,
+            'phone', COALESCE(NEW.phone, ''),
+            'email_confirmed_at', NEW.email_confirmed_at,
+            'last_sign_in_at', NEW.last_sign_in_at,
+            'updated_at', NOW()
+        ),
+        updated_at = NOW()
+    WHERE id = NEW.id;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger pour mettre à jour le profil
+CREATE TRIGGER on_auth_user_updated
+    AFTER UPDATE ON auth.users
+    FOR EACH ROW
+    WHEN (OLD.* IS DISTINCT FROM NEW.*)
+    EXECUTE FUNCTION public.handle_user_update();
+
 -- Fonction pour vérifier que le prix par pays n'est pas inférieur au prix minimum
 CREATE OR REPLACE FUNCTION check_minimum_price()
 RETURNS TRIGGER AS $$
@@ -491,6 +564,55 @@ BEGIN
     RETURN TRUE;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Fonction RPC pour récupérer le profil utilisateur sans problème RLS
+CREATE OR REPLACE FUNCTION public.get_user_profile(user_id UUID)
+RETURNS TABLE (
+    id UUID,
+    username TEXT,
+    display_name TEXT,
+    country_code CHAR(2),
+    language_code VARCHAR(5),
+    created_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ,
+    is_admin BOOLEAN,
+    metadata JSONB
+) 
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+    -- Vérifier que l'utilisateur demande son propre profil
+    IF auth.uid() != user_id THEN
+        RAISE EXCEPTION 'Unauthorized';
+    END IF;
+    
+    RETURN QUERY
+    SELECT 
+        p.id,
+        p.username,
+        p.display_name,
+        p.country_code,
+        p.language_code,
+        p.created_at,
+        p.updated_at,
+        p.is_admin,
+        p.metadata
+    FROM public.profiles p
+    WHERE p.id = user_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- =====================================================
+-- PERMISSIONS ET GRANTS
+-- =====================================================
+
+-- Donner les permissions nécessaires
+GRANT USAGE ON SCHEMA public TO postgres, anon, authenticated, service_role;
+GRANT ALL ON public.profiles TO postgres, service_role;
+GRANT SELECT, UPDATE ON public.profiles TO authenticated;
+GRANT SELECT ON public.profiles TO anon;
+GRANT EXECUTE ON FUNCTION public.get_user_profile(UUID) TO authenticated;
 
 -- =====================================================
 -- INDEX POUR LES PERFORMANCES

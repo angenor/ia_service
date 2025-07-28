@@ -40,13 +40,26 @@ import {
   faComments,
   faSignOutAlt,
   faSignInAlt,
-  faUserPlus,
   faTimes,
   faCloudUploadAlt,
   faFile,
   faCamera,
   faCheckCircle,
-  faLaptop
+  faLaptop,
+  faChartLine,
+  faCogs,
+  faDollarSign,
+  faTags,
+  faUsers,
+  faExclamationTriangle,
+  faEdit,
+  faTrash,
+  faDownload,
+  faUpload,
+  faSync,
+  faUserMinus,
+  faUserPlus,
+  faChartBar
 } from '@fortawesome/free-solid-svg-icons'
 
 library.add(
@@ -89,13 +102,26 @@ library.add(
   faComments,
   faSignOutAlt,
   faSignInAlt,
-  faUserPlus,
   faTimes,
   faCloudUploadAlt,
   faFile,
   faCamera,
   faCheckCircle,
-  faLaptop
+  faLaptop,
+  faChartLine,
+  faCogs,
+  faDollarSign,
+  faTags,
+  faUsers,
+  faExclamationTriangle,
+  faEdit,
+  faTrash,
+  faDownload,
+  faUpload,
+  faSync,
+  faUserMinus,
+  faUserPlus,
+  faChartBar
 )
 
 export default FontAwesomeIcon

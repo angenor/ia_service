@@ -7,9 +7,11 @@ import LanguageSelector from './components/ui/LanguageSelector.vue'
 import AppSideBar from './components/AppSideBar.vue'
 import { useThemeStore } from './stores/theme'
 import { useLocaleStore } from './stores/locale'
+import { useAuthStore } from './stores/auth'
 
 const themeStore = useThemeStore()
 const localeStore = useLocaleStore()
+const authStore = useAuthStore()
 
 onMounted(() => {
   themeStore.initTheme()
@@ -39,6 +41,17 @@ onMounted(() => {
                 <font-awesome-icon icon="coins" class="text-yellow-500" />
               </div>
               
+              <!-- Admin Link (if admin) -->
+              <div v-if="authStore.userProfile?.is_admin" class="flex items-center">
+                <RouterLink 
+                  to="/admin" 
+                  class="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                >
+                  <font-awesome-icon icon="cog" />
+                  <span>Admin</span>
+                </RouterLink>
+              </div>
+
               <!-- User Profile -->
               <div class="flex items-center space-x-2">
                 <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
