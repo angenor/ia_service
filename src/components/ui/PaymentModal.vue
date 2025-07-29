@@ -25,53 +25,74 @@
                     </p>
                   </div>
 
-                  <div class="space-y-3">
-                    <div 
-                      v-for="pack in pointPacks" 
-                      :key="pack.id"
-                      @click="selectedPack = pack"
-                      :class="[
-                        'relative rounded-lg border-2 p-4 cursor-pointer transition-all',
-                        selectedPack?.id === pack.id 
-                          ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' 
-                          : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
-                      ]"
-                    >
-                      <div class="flex items-center justify-between">
-                        <div>
-                          <h4 class="text-lg font-medium text-gray-900 dark:text-white">
-                            {{ pack.points }} {{ $t('payment.points') }}
-                          </h4>
+                  <div class="space-y-4">
+                    <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
+                      <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">
+                        {{ $t('payment.selectPoints') }}
+                      </h4>
+                      <div class="flex items-center justify-center space-x-4">
+                        <button
+                          @mousedown="startDecrement"
+                          @mouseup="stopIncrement"
+                          @mouseleave="stopIncrement"
+                          @touchstart="startDecrement"
+                          @touchend="stopIncrement"
+                          @click="decrementPoints"
+                          :disabled="selectedPoints <= 50"
+                          :class="[
+                            'w-10 h-10 rounded-full flex items-center justify-center transition-all select-none',
+                            selectedPoints <= 50
+                              ? 'bg-gray-200 dark:bg-gray-600 cursor-not-allowed text-gray-400 dark:text-gray-500'
+                              : 'bg-primary-600 hover:bg-primary-700 text-white active:bg-primary-800'
+                          ]"
+                        >
+                          <span class="text-xl font-bold">-</span>
+                        </button>
+                        <div class="text-center">
+                          <p class="text-3xl font-bold text-gray-900 dark:text-white">
+                            {{ selectedPoints }}
+                          </p>
                           <p class="text-sm text-gray-600 dark:text-gray-300">
-                            {{ pack.bonus > 0 ? `+${pack.bonus} ${$t('payment.bonusPoints')}` : '' }}
+                            {{ $t('payment.points') }}
                           </p>
                         </div>
-                        <div class="text-right">
-                          <p class="text-2xl font-bold text-gray-900 dark:text-white">
-                            {{ formatPrice(pack.price) }}
-                          </p>
-                          <p v-if="pack.savings" class="text-sm text-green-600 dark:text-green-400">
-                            {{ $t('payment.save') }} {{ pack.savings }}%
-                          </p>
-                        </div>
+                        <button
+                          @mousedown="startIncrement"
+                          @mouseup="stopIncrement"
+                          @mouseleave="stopIncrement"
+                          @touchstart="startIncrement"
+                          @touchend="stopIncrement"
+                          @click="incrementPoints"
+                          :disabled="selectedPoints >= 10000"
+                          :class="[
+                            'w-10 h-10 rounded-full flex items-center justify-center transition-all select-none',
+                            selectedPoints >= 10000
+                              ? 'bg-gray-200 dark:bg-gray-600 cursor-not-allowed text-gray-400 dark:text-gray-500'
+                              : 'bg-primary-600 hover:bg-primary-700 text-white active:bg-primary-800'
+                          ]"
+                        >
+                          <span class="text-xl font-bold">+</span>
+                        </button>
                       </div>
-                      <div v-if="pack.popular" class="absolute -top-2 left-1/2 transform -translate-x-1/2">
-                        <span class="bg-primary-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
-                          {{ $t('payment.popular') }}
-                        </span>
-                      </div>
+                      <p class="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
+                        {{ $t('payment.incrementNote') }}
+                      </p>
                     </div>
                   </div>
 
-                  <div v-if="selectedPack" class="mt-6 border-t dark:border-gray-700 pt-4">
+                  <div class="mt-6 border-t dark:border-gray-700 pt-4">
                     <div class="flex justify-between text-sm mb-2">
-                      <span class="text-gray-600 dark:text-gray-300">{{ $t('payment.subtotal') }}</span>
-                      <span class="text-gray-900 dark:text-white">{{ formatPrice(selectedPack.price) }}</span>
+                      <span class="text-gray-600 dark:text-gray-300">{{ $t('payment.pointsSelected') }}</span>
+                      <span class="text-gray-900 dark:text-white">{{ selectedPoints }} {{ $t('payment.points') }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm mb-2">
+                      <span class="text-gray-600 dark:text-gray-300">{{ $t('payment.pricePerPoint') }}</span>
+                      <span class="text-gray-900 dark:text-white">{{ formatPrice(0.01) }}</span>
                     </div>
                     <div class="flex justify-between text-lg font-medium">
                       <span class="text-gray-900 dark:text-white">{{ $t('payment.total') }}</span>
-                      <span class="text-primary-600 dark:text-white">
-                        {{ selectedPack.points + selectedPack.bonus }} {{ $t('payment.points') }}
+                      <span class="text-primary-600 dark:text-primary-400">
+                        {{ formatPrice(calculatedPrice) }}
                       </span>
                     </div>
                   </div>
@@ -87,10 +108,10 @@
             <button
               type="button"
               @click="purchase"
-              :disabled="!selectedPack || processing"
+              :disabled="selectedPoints === 0 || processing"
               :class="[
                 'w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium sm:ml-3 sm:w-auto sm:text-sm',
-                !selectedPack || processing
+                selectedPoints === 0 || processing
                   ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed'
                   : 'bg-primary-600 hover:bg-primary-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500'
               ]"
@@ -112,7 +133,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores/user'
 
@@ -128,42 +149,28 @@ const emit = defineEmits(['close'])
 const { locale } = useI18n()
 const userStore = useUserStore()
 
-const selectedPack = ref(null)
+const selectedPoints = ref(100)
 const processing = ref(false)
+const intervalId = ref(null)
+const isHolding = ref(false)
 
 const currentPoints = computed(() => userStore.points)
 
-const pointPacks = ref([
-  {
-    id: 1,
-    points: 100,
-    bonus: 0,
-    price: 9.99,
-    savings: 0
-  },
-  {
-    id: 2,
-    points: 500,
-    bonus: 50,
-    price: 39.99,
-    savings: 20,
-    popular: true
-  },
-  {
-    id: 3,
-    points: 1000,
-    bonus: 200,
-    price: 69.99,
-    savings: 30
-  },
-  {
-    id: 4,
-    points: 2500,
-    bonus: 750,
-    price: 149.99,
-    savings: 40
+const calculatedPrice = computed(() => {
+  return selectedPoints.value * 0.01 // 100 points = 1 dollar
+})
+
+const incrementPoints = () => {
+  if (selectedPoints.value < 10000) {
+    selectedPoints.value += 50
   }
-])
+}
+
+const decrementPoints = () => {
+  if (selectedPoints.value > 50) {
+    selectedPoints.value -= 50
+  }
+}
 
 const formatPrice = (price) => {
   const formatter = new Intl.NumberFormat(locale.value, {
@@ -173,13 +180,62 @@ const formatPrice = (price) => {
   return formatter.format(price)
 }
 
+const startIncrement = (e) => {
+  e.preventDefault()
+  isHolding.value = true
+  
+  // Attendre 300ms avant de commencer l'incrémentation continue
+  setTimeout(() => {
+    if (isHolding.value) {
+      intervalId.value = setInterval(() => {
+        if (selectedPoints.value < 10000) {
+          selectedPoints.value += 50
+        } else {
+          stopIncrement()
+        }
+      }, 333) // 3 fois par seconde
+    }
+  }, 300)
+}
+
+const startDecrement = (e) => {
+  e.preventDefault()
+  isHolding.value = true
+  
+  // Attendre 300ms avant de commencer la décrémentation continue
+  setTimeout(() => {
+    if (isHolding.value) {
+      intervalId.value = setInterval(() => {
+        if (selectedPoints.value > 50) {
+          selectedPoints.value -= 50
+        } else {
+          stopIncrement()
+        }
+      }, 333) // 3 fois par seconde
+    }
+  }, 300)
+}
+
+const stopIncrement = () => {
+  isHolding.value = false
+  if (intervalId.value) {
+    clearInterval(intervalId.value)
+    intervalId.value = null
+  }
+}
+
 const close = () => {
-  selectedPack.value = null
+  stopIncrement()
+  selectedPoints.value = 100
   emit('close')
 }
 
+onBeforeUnmount(() => {
+  stopIncrement()
+})
+
 const purchase = async () => {
-  if (!selectedPack.value || processing.value) return
+  if (selectedPoints.value === 0 || processing.value) return
   
   processing.value = true
   
@@ -188,13 +244,11 @@ const purchase = async () => {
     await new Promise(resolve => setTimeout(resolve, 2000))
     
     // Add points to user account via Supabase
-    const totalPoints = selectedPack.value.points + selectedPack.value.bonus
-    const success = await userStore.addPoints(totalPoints)
+    const success = await userStore.addPoints(selectedPoints.value)
     
     if (success) {
       // Show success message (you might want to add a toast notification here)
-      alert(`Successfully added ${totalPoints} points to your account!`)
-      selectedPack.value = null
+      alert(`Successfully added ${selectedPoints.value} points to your account!`)
       close()
     } else {
       // Show error message

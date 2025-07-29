@@ -186,6 +186,9 @@ export const useUserStore = defineStore('user', () => {
       .subscribe()
   }
 
+  // Alias for usePoints to match the component usage
+  const deductPoints = usePoints
+
   return {
     walletData,
     points,
@@ -195,6 +198,7 @@ export const useUserStore = defineStore('user', () => {
     fetchWallet,
     addPoints,
     usePoints,
+    deductPoints,
     getTransactionHistory,
     hasEnoughPoints
   }

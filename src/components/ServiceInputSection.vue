@@ -99,6 +99,8 @@
                   <select 
                     :value="serviceStore.generationOptions[option.key]"
                     @change="serviceStore.updateOption(option.key, $event.target.value)"
+                    @focus="isDropdownOpen = true"
+                    @blur="isDropdownOpen = false"
                     class="appearance-none pl-3 pr-8 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 border-0"
                   >
                     <option v-for="choice in option.choices" :key="choice" :value="choice">
@@ -137,10 +139,17 @@
           <!-- Right side: Generate Button -->
           <button 
             @click="handleGenerate"
-            :disabled="!canGenerate"
+            :disabled="!canGenerate || isGenerating"
             class="px-6 py-2 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-full font-medium transition-colors flex items-center space-x-2 text-sm"
           >
-            <span>{{ $t('input.generate') }}</span>
+            <span v-if="!isGenerating">{{ $t('input.generate') }}</span>
+            <span v-else class="flex items-center space-x-2">
+              <span>{{ $t('input.generating') }}</span>
+              <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </span>
             <span class="bg-green-600 dark:bg-green-400 text-white dark:text-green-900 px-2 py-1 rounded-full text-xs font-bold">
               {{ estimatedCost }}
             </span>
@@ -174,6 +183,16 @@ import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 const serviceStore = useServiceStore()
 
+// Props et émissions
+const props = defineProps({
+  isGenerating: {
+    type: Boolean,
+    default: false
+  }
+})
+
+const emit = defineEmits(['generate'])
+
 // État local
 const mainInputValue = ref('')
 const secondaryInputValue = ref('')
@@ -187,6 +206,7 @@ const currentPlaceholderIndex = ref(0)
 const currentCharIndex = ref(0)
 const isTyping = ref(true)
 const isPaused = ref(false)
+const isDropdownOpen = ref(false) // Track if any dropdown is open
 let typewriterInterval = null
 let placeholderRotationTimeout = null
 
@@ -300,8 +320,51 @@ const canGenerate = computed(() => {
 })
 
 const estimatedCost = computed(() => {
-  // TODO: Calculer le coût réel basé sur le service et les options
-  return 200
+  // Tarifs OpenRouter par million de tokens (en USD)
+  const openRouterPricing = {
+    'gpt-3.5-turbo': { input: 0.50, output: 1.50 },
+    'gpt-4': { input: 30.00, output: 60.00 },
+    'gpt-4-turbo': { input: 10.00, output: 30.00 },
+    'claude-3-haiku': { input: 0.25, output: 1.25 },
+    'claude-3-sonnet': { input: 3.00, output: 15.00 },
+    'claude-3-opus': { input: 15.00, output: 75.00 },
+    'gemini-pro': { input: 2.50, output: 7.50 },
+    'gemini-pro-vision': { input: 2.50, output: 7.50 },
+    'llama-3': { input: 0.70, output: 0.80 }
+  }
+
+  // Pour les LLM, calculer basé sur le modèle et les tarifs OpenRouter
+  if (serviceStore.selectedCategory === 'llm' && serviceStore.generationOptions.model) {
+    const pricing = openRouterPricing[serviceStore.generationOptions.model]
+    if (pricing) {
+      // Calcul basé sur une requête minimale (~100 tokens input + 100 tokens output)
+      const minTokens = { input: 100, output: 100 }
+      const costUSD = (minTokens.input * pricing.input / 1000000) + 
+                      (minTokens.output * pricing.output / 1000000)
+      
+      // Convertir en points (100 points = 1 USD) et assurer un minimum de 1 point
+      const points = Math.max(1, Math.ceil(costUSD * 100))
+      return points
+    }
+  }
+
+  // Pour les autres services, utiliser la base de données ou les valeurs par défaut
+  const defaultCosts = {
+    video: { textToVideo: 500, imageToVideo: 400 },
+    image: { textToImage: 100, imageToImage: 150 },
+    music: { textToMusic: 300, generation: 250 },
+    tools: { translation: 10, vision: 50 }
+  }
+
+  if (serviceStore.selectedCategory && serviceStore.selectedService) {
+    const categoryCosts = defaultCosts[serviceStore.selectedCategory]
+    if (categoryCosts) {
+      return categoryCosts[serviceStore.selectedService] || 1
+    }
+  }
+
+  // Minimum 1 point par requête
+  return 1
 })
 
 // Methods
@@ -348,7 +411,7 @@ const autoResize = () => {
 
 // Typewriter effect functions
 const startTypewriter = () => {
-  if (isPaused.value || !currentServicePrompts.value.length) return
+  if (isPaused.value || !currentServicePrompts.value.length || isDropdownOpen.value) return
   
   const currentPrompts = currentServicePrompts.value
   const currentPrompt = currentPrompts[currentPlaceholderIndex.value]
@@ -399,7 +462,7 @@ const pauseTypewriter = () => {
 }
 
 const resumeTypewriter = () => {
-  if (mainInputValue.value.trim() === '') {
+  if (mainInputValue.value.trim() === '' && !isDropdownOpen.value) {
     isPaused.value = false
     startTypewriterLoop()
   }
@@ -431,13 +494,15 @@ const resetTypewriter = () => {
 }
 
 const handleGenerate = () => {
-  // TODO: Implémenter la génération
-  console.log('Generate with:', {
+  const data = {
     service: `${serviceStore.selectedCategory}/${serviceStore.selectedService}`,
     mainInput: mainInputValue.value || uploadedFile.value,
     secondaryInput: secondaryInputValue.value,
-    options: serviceStore.generationOptions
-  })
+    options: serviceStore.generationOptions,
+    estimatedCost: estimatedCost.value
+  }
+  
+  emit('generate', data)
 }
 
 // Lifecycle

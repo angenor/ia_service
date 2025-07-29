@@ -88,6 +88,12 @@
       "providers": "ChatGPT 4.5, Claude Opus 4..."
     }
   },
+  "llm": {
+    "startConversation": "Start a conversation with AI",
+    "insufficientPoints": "Insufficient points for this conversation",
+    "apiError": "Error communicating with the API",
+    "genericError": "An error occurred. Please try again."
+  },
   "user": {
     "profile": "User Profile",
     "plan": {
@@ -171,7 +177,11 @@
     "save": "Save",
     "popular": "POPULAR",
     "subtotal": "Subtotal",
-    "total": "Total points",
+    "total": "Total",
+    "selectPoints": "Select number of points",
+    "incrementNote": "Adjust in increments of 50 points",
+    "pointsSelected": "Points selected",
+    "pricePerPoint": "Price per point",
     "purchase": "Purchase",
     "processing": "Processing...",
     "cancel": "Cancel"
@@ -257,6 +267,7 @@
     "placeholder": "Enter a prompt",
     "otherOptions": "Other options (variable by model)",
     "generate": "Generate",
+    "generating": "Generating...",
     "selectServicePrompt": "Select a service to get started",
     "supportedFormats": "Supported formats",
     "options": {
@@ -273,7 +284,41 @@
       "temperature": "Temperature",
       "targetLanguage": "Target Language",
       "tone": "Tone",
-      "analysisType": "Analysis Type"
+      "analysisType": "Analysis Type",
+      "model": {
+        "gpt-3.5-turbo": "GPT-3.5 Turbo",
+        "gpt-4": "GPT-4",
+        "gpt-4-turbo": "GPT-4 Turbo",
+        "claude-3-haiku": "Claude 3 Haiku",
+        "claude-3-sonnet": "Claude 3 Sonnet",
+        "claude-3-opus": "Claude 3 Opus",
+        "gemini-pro": "Gemini Pro",
+        "gemini-pro-vision": "Gemini Pro Vision",
+        "llama-3": "Llama 3 (70B)"
+      },
+      "temperature": {
+        "0": "0 - Very Precise",
+        "0.1": "0.1",
+        "0.2": "0.2",
+        "0.3": "0.3",
+        "0.4": "0.4",
+        "0.5": "0.5 - Balanced",
+        "0.6": "0.6",
+        "0.7": "0.7 - Default",
+        "0.8": "0.8",
+        "0.9": "0.9",
+        "1": "1 - Creative",
+        "1.1": "1.1",
+        "1.2": "1.2",
+        "1.3": "1.3",
+        "1.4": "1.4",
+        "1.5": "1.5 - Very Creative",
+        "1.6": "1.6",
+        "1.7": "1.7",
+        "1.8": "1.8",
+        "1.9": "1.9",
+        "2": "2 - Maximum"
+      }
     },
     "video": {
       "textToVideoPlaceholder": "Describe the video you want to generate...",
