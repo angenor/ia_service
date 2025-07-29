@@ -50,10 +50,10 @@
 
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Prix de base (points)
+              Prix en points
             </label>
             <input
-              v-model.number="form.base_price_points"
+              v-model.number="form.cost_points"
               type="number"
               min="1"
               required
@@ -61,27 +61,10 @@
             >
           </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Coût API par requête (USD)
-            </label>
-            <input
-              v-model.number="form.api_cost_per_request"
-              type="number"
-              step="0.0001"
-              min="0"
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            >
-          </div>
-
-          <div v-if="form.base_price_points && form.api_cost_per_request" class="p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
+          <div v-if="form.cost_points" class="p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
             <div class="text-sm text-gray-600 dark:text-gray-300">
-              <div>Prix client: {{ form.base_price_points }} points</div>
-              <div>Coût API: ${{ form.api_cost_per_request }}</div>
-              <div>Équivalent client: ${{ (form.base_price_points / 1000).toFixed(4) }}</div>
-              <div class="font-medium" :class="profitMargin >= 20 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
-                Marge: {{ profitMargin }}%
-              </div>
+              <div>Prix configuré: {{ form.cost_points }} points</div>
+              <div>Équivalent: ${{ (form.cost_points * 0.01).toFixed(2) }}</div>
             </div>
           </div>
 
@@ -133,18 +116,9 @@ const emit = defineEmits(['close', 'save'])
 const form = ref({
   service_id: '',
   country_code: '',
-  base_price_points: 0,
-  api_cost_per_request: 0
+  cost_points: 0
 })
 
-const profitMargin = computed(() => {
-  if (!form.value.base_price_points || !form.value.api_cost_per_request) return 0
-  
-  const clientPrice = form.value.base_price_points / 1000 // 1000 points = 1 USD
-  const margin = ((clientPrice - form.value.api_cost_per_request) / clientPrice) * 100
-  
-  return Math.round(margin * 10) / 10
-})
 
 function handleSubmit() {
   emit('save', form.value)
@@ -152,7 +126,11 @@ function handleSubmit() {
 
 onMounted(() => {
   if (props.pricing) {
-    form.value = { ...props.pricing }
+    form.value = {
+      service_id: props.pricing.service_id,
+      country_code: props.pricing.country_code,
+      cost_points: props.pricing.cost_points || props.pricing.base_price_points || 0
+    }
   }
 })
 </script>

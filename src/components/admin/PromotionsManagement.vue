@@ -92,7 +92,7 @@
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                {{ promotion.current_usage || 0 }} / {{ promotion.max_usage || '∞' }}
+                {{ promotion.current_usage || 0 }} / {{ promotion.max_uses_total || '∞' }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                 <button
@@ -118,7 +118,7 @@
     <PromotionModal
       v-if="showPromotionModal"
       :promotion="selectedPromotion"
-      :services="adminStore.aiServices"
+      :services="aiServicesStore.services"
       @close="closePromotionModal"
       @save="savePromotion"
     />
@@ -128,11 +128,15 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useAdminStore } from '@/stores/admin'
+import { usePromotionsStore } from '@/stores/promotions'
+import { useAIServicesStore } from '@/stores/aiServices'
 import { useI18n } from 'vue-i18n'
 import PromotionModal from './modals/PromotionModal.vue'
 
 const { t } = useI18n()
 const adminStore = useAdminStore()
+const promotionsStore = usePromotionsStore()
+const aiServicesStore = useAIServicesStore()
 
 // État local
 const activeTab = ref('active')
@@ -141,14 +145,20 @@ const selectedPromotion = ref(null)
 
 // Computed
 const filteredPromotions = computed(() => {
-  const now = new Date()
-  return adminStore.promotions.filter(promotion => {
-    if (activeTab.value === 'active') {
-      return new Date(promotion.valid_until) > now
-    } else {
-      return new Date(promotion.valid_until) <= now
-    }
-  })
+  const promotionsWithUsage = promotionsStore.promotionsWithUsage
+  if (activeTab.value === 'active') {
+    const now = new Date()
+    return promotionsWithUsage.filter(promotion => 
+      promotion.is_active && 
+      new Date(promotion.valid_from) <= now &&
+      new Date(promotion.valid_until) > now
+    )
+  } else {
+    const now = new Date()
+    return promotionsWithUsage.filter(promotion => 
+      !promotion.is_active || new Date(promotion.valid_until) <= now
+    )
+  }
 })
 
 // Methods
@@ -169,9 +179,9 @@ function closePromotionModal() {
 async function savePromotion(promotionData) {
   try {
     if (selectedPromotion.value) {
-      await adminStore.updatePromotion(selectedPromotion.value.id, promotionData)
+      await promotionsStore.updatePromotion(selectedPromotion.value.id, promotionData)
     } else {
-      await adminStore.createPromotion(promotionData)
+      await promotionsStore.createPromotion(promotionData)
     }
     closePromotionModal()
   } catch (error) {
@@ -182,7 +192,7 @@ async function savePromotion(promotionData) {
 async function deletePromotion(promotion) {
   if (confirm(t('admin.services.confirmDelete'))) {
     try {
-      await adminStore.deletePromotion(promotion.id)
+      await promotionsStore.deletePromotion(promotion.id)
     } catch (error) {
       console.error('Erreur lors de la suppression de la promotion:', error)
     }
@@ -192,8 +202,8 @@ async function deletePromotion(promotion) {
 // Lifecycle
 onMounted(async () => {
   await Promise.all([
-    adminStore.fetchPromotions(),
-    adminStore.fetchAiServices()
+    promotionsStore.fetchAllData(),
+    aiServicesStore.fetchAllData()
   ])
 })
 </script>

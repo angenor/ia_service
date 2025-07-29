@@ -110,7 +110,7 @@
     </div>
 
     <!-- Footer du sidebar -->
-    <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+    <div class="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
       <div class="flex items-center">
         <div class="flex items-center justify-center w-8 h-8 bg-green-100 dark:bg-green-900/20 rounded-full">
           <div class="w-2 h-2 bg-green-500 rounded-full"></div>

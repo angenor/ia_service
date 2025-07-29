@@ -9,11 +9,11 @@
         <div class="flex items-center space-x-3">
           <select 
             v-model="selectedDateRange" 
-            @change="fetchData"
+            @change="changeDateRange"
             class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
-            <option value="7">{{ $t('admin.dashboard.last7Days') }}</option>
-            <option value="30">{{ $t('admin.dashboard.last30Days') }}</option>
+            <option value="last7Days">{{ $t('admin.dashboard.last7Days') }}</option>
+            <option value="last30Days">{{ $t('admin.dashboard.last30Days') }}</option>
             <option value="thisMonth">{{ $t('admin.dashboard.thisMonth') }}</option>
             <option value="lastMonth">{{ $t('admin.dashboard.lastMonth') }}</option>
           </select>
@@ -33,7 +33,7 @@
           <div class="flex items-center justify-between">
             <div>
               <p class="text-blue-100 text-sm">{{ $t('admin.dashboard.totalRevenue') }}</p>
-              <p class="text-2xl font-semibold">{{ formatCurrency(metrics.totalRevenue) }}</p>
+              <p class="text-2xl font-semibold">{{ dashboardStore.formattedRevenue }}</p>
             </div>
             <font-awesome-icon icon="dollar-sign" class="text-3xl text-blue-200" />
           </div>
@@ -43,7 +43,7 @@
           <div class="flex items-center justify-between">
             <div>
               <p class="text-green-100 text-sm">{{ $t('admin.dashboard.totalUsers') }}</p>
-              <p class="text-2xl font-semibold">{{ metrics.totalUsers.toLocaleString() }}</p>
+              <p class="text-2xl font-semibold">{{ dashboardStore.formattedUsers }}</p>
             </div>
             <font-awesome-icon icon="users" class="text-3xl text-green-200" />
           </div>
@@ -53,7 +53,7 @@
           <div class="flex items-center justify-between">
             <div>
               <p class="text-purple-100 text-sm">{{ $t('admin.dashboard.activeServices') }}</p>
-              <p class="text-2xl font-semibold">{{ metrics.activeServices }}</p>
+              <p class="text-2xl font-semibold">{{ dashboardStore.activeServices }}</p>
             </div>
             <font-awesome-icon icon="cogs" class="text-3xl text-purple-200" />
           </div>
@@ -63,7 +63,7 @@
           <div class="flex items-center justify-between">
             <div>
               <p class="text-orange-100 text-sm">{{ $t('admin.dashboard.profitMargin') }}</p>
-              <p class="text-2xl font-semibold">{{ metrics.profitMargin }}%</p>
+              <p class="text-2xl font-semibold">{{ dashboardStore.profitMargin }}%</p>
             </div>
             <font-awesome-icon icon="chart-line" class="text-3xl text-orange-200" />
           </div>
@@ -117,15 +117,15 @@
               </tr>
             </thead>
             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              <tr v-for="service in topServices" :key="service.id">
+              <tr v-for="service in dashboardStore.topServices" :key="service.name">
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                   {{ service.name }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                  {{ service.usage_count.toLocaleString() }}
+                  {{ service.totalUsage?.toLocaleString() || 0 }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                  {{ formatCurrency(service.revenue) }}
+                  {{ formatCurrency((service.totalPoints || 0) / 100) }}
                 </td>
               </tr>
             </tbody>
@@ -140,7 +140,7 @@
         </h3>
         <div class="space-y-4">
           <div 
-            v-for="activity in recentActivity" 
+            v-for="activity in dashboardStore.recentTransactions" 
             :key="activity.id"
             class="flex items-center space-x-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-700"
           >
@@ -151,14 +151,14 @@
             </div>
             <div class="flex-1 min-w-0">
               <p class="text-sm text-gray-900 dark:text-white">
-                {{ activity.user_email }} a utilisé {{ activity.service_name }}
+                {{ activity.user_name }} - {{ activity.type }} de {{ activity.amount }} points
               </p>
               <p class="text-xs text-gray-500 dark:text-gray-400">
                 {{ formatDate(activity.created_at) }}
               </p>
             </div>
             <div class="text-sm text-gray-500 dark:text-gray-300">
-              {{ activity.points_used }} points
+              {{ formatCurrency(activity.amount / 100) }}
             </div>
           </div>
         </div>
@@ -235,21 +235,15 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useAdminStore } from '@/stores/admin'
+import { useAdminDashboardStore } from '@/stores/adminDashboard'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const adminStore = useAdminStore()
+const dashboardStore = useAdminDashboardStore()
 
 // État local
-const selectedDateRange = ref('30')
-const metrics = ref({
-  totalRevenue: 0,
-  totalUsers: 0,
-  activeServices: 0,
-  profitMargin: 0
-})
-const topServices = ref([])
-const recentActivity = ref([])
+const selectedDateRange = ref('last30Days')
 
 // Computed
 const formattedProfitabilityData = computed(() => {
@@ -283,53 +277,18 @@ function getProfitMarginClass(percentage) {
 
 async function fetchData() {
   try {
-    // Charger les données de rentabilité
+    // Charger les données depuis le store dashboard
+    await dashboardStore.fetchDashboardStats()
+    
+    // Charger les données de rentabilité depuis l'admin store
     await adminStore.fetchProfitabilityData()
-    
-    // Simuler des métriques (à remplacer par de vraies données)
-    metrics.value = {
-      totalRevenue: adminStore.totalRevenue || 12580.50,
-      totalUsers: adminStore.totalUsers || 247,
-      activeServices: adminStore.activeServices.length || 15,
-      profitMargin: 42.5
-    }
-    
-    // Simuler des services populaires
-    topServices.value = [
-      { id: 1, name: 'GPT-4 Chat', usage_count: 1250, revenue: 3240.50 },
-      { id: 2, name: 'DALL-E Image Generation', usage_count: 980, revenue: 2856.75 },
-      { id: 3, name: 'Claude Sonnet', usage_count: 756, revenue: 1890.25 },
-      { id: 4, name: 'Stable Video Diffusion', usage_count: 542, revenue: 1456.80 },
-      { id: 5, name: 'ElevenLabs Voice', usage_count: 423, revenue: 987.60 }
-    ]
-    
-    // Simuler l'activité récente
-    recentActivity.value = [
-      {
-        id: 1,
-        user_email: 'user1@example.com',
-        service_name: 'GPT-4 Chat',
-        points_used: 10,
-        created_at: new Date(Date.now() - 5 * 60 * 1000).toISOString()
-      },
-      {
-        id: 2,
-        user_email: 'user2@example.com',
-        service_name: 'DALL-E Image',
-        points_used: 25,
-        created_at: new Date(Date.now() - 12 * 60 * 1000).toISOString()
-      },
-      {
-        id: 3,
-        user_email: 'user3@example.com',
-        service_name: 'Claude Sonnet',
-        points_used: 15,
-        created_at: new Date(Date.now() - 18 * 60 * 1000).toISOString()
-      }
-    ]
   } catch (error) {
     console.error('Erreur lors du chargement des données:', error)
   }
+}
+
+function changeDateRange() {
+  dashboardStore.setDateRange(selectedDateRange.value)
 }
 
 async function refreshProfitabilityData() {
@@ -340,8 +299,14 @@ async function exportReport() {
   try {
     const reportData = {
       dateRange: selectedDateRange.value,
-      metrics: metrics.value,
-      topServices: topServices.value,
+      metrics: {
+        totalRevenue: dashboardStore.totalRevenue,
+        totalUsers: dashboardStore.totalUsers,
+        activeServices: dashboardStore.activeServices,
+        profitMargin: dashboardStore.profitMargin
+      },
+      topServices: dashboardStore.topServices,
+      recentTransactions: dashboardStore.recentTransactions,
       profitabilityData: adminStore.profitabilityData,
       generatedAt: new Date().toISOString()
     }

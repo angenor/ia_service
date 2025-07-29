@@ -44,6 +44,19 @@
 
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Nom de la promotion
+            </label>
+            <input
+              v-model="form.name"
+              type="text"
+              required
+              placeholder="Ex: Promotion de bienvenue"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            >
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Description
             </label>
             <textarea
@@ -53,7 +66,7 @@
             ></textarea>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 {{ $t('admin.promotions.discountValue') }}
@@ -75,7 +88,7 @@
                 {{ $t('admin.promotions.minPurchase') }} (points)
               </label>
               <input
-                v-model.number="form.min_purchase"
+                v-model.number="form.min_purchase_points"
                 type="number"
                 min="0"
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -84,13 +97,26 @@
 
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {{ $t('admin.promotions.maxUsage') }}
+                Limite d'usage total
               </label>
               <input
-                v-model.number="form.max_usage"
+                v-model.number="form.max_uses_total"
                 type="number"
                 min="1"
                 placeholder="Illimité si vide"
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              >
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Limite par utilisateur
+              </label>
+              <input
+                v-model.number="form.max_uses_per_user"
+                type="number"
+                min="1"
+                value="1"
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
             </div>
@@ -142,7 +168,7 @@
               <hr class="my-2">
               <div v-for="service in services" :key="service.id" class="flex items-center">
                 <input
-                  v-model="form.applicable_services"
+                  v-model="form.service_ids"
                   :value="service.id"
                   type="checkbox"
                   :id="`service-${service.id}`"
@@ -162,7 +188,7 @@
             <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
               <div v-for="country in availableCountries" :key="country" class="flex items-center">
                 <input
-                  v-model="form.applicable_countries"
+                  v-model="form.country_codes"
                   :value="country"
                   type="checkbox"
                   :id="`country-${country}`"
@@ -218,15 +244,18 @@ const emit = defineEmits(['close', 'save'])
 
 const form = ref({
   code: '',
+  name: '',
   description: '',
   discount_type: 'percentage',
   discount_value: 0,
-  min_purchase: 0,
-  max_usage: null,
+  min_purchase_points: 0,
+  max_uses_total: null,
+  max_uses_per_user: 1,
   valid_from: '',
   valid_until: '',
-  applicable_services: [],
-  applicable_countries: ['FR', 'US', 'DE', 'ES', 'IT', 'GB', 'CA']
+  service_ids: [],
+  country_codes: ['FR', 'US', 'DE', 'ES', 'IT', 'GB', 'CA'],
+  is_active: true
 })
 
 const availableCountries = ['FR', 'US', 'DE', 'ES', 'IT', 'GB', 'CA', 'JP', 'CN', 'AU', 'BR']
@@ -247,22 +276,22 @@ const countryNames = {
 
 const allServicesSelected = computed({
   get() {
-    return form.value.applicable_services.length === props.services.length
+    return form.value.service_ids.length === props.services.length
   },
   set(value) {
     if (value) {
-      form.value.applicable_services = props.services.map(s => s.id)
+      form.value.service_ids = props.services.map(s => s.id)
     } else {
-      form.value.applicable_services = []
+      form.value.service_ids = []
     }
   }
 })
 
 function toggleAllServices() {
   if (allServicesSelected.value) {
-    form.value.applicable_services = []
+    form.value.service_ids = []
   } else {
-    form.value.applicable_services = props.services.map(s => s.id)
+    form.value.service_ids = props.services.map(s => s.id)
   }
 }
 

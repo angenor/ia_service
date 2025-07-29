@@ -1,0 +1,53 @@
+/* Theme Fixes for Better Contrast */
+
+/* Fix text color contrast issues in light mode */
+.text-gray-500 {
+  @apply text-gray-600;
+}
+
+.text-gray-600 {
+  @apply text-gray-700;
+}
+
+/* Fix background contrast issues in light mode */
+.bg-gray-50 {
+  @apply bg-gray-100;
+}
+
+/* Ensure proper dark mode text colors */
+.dark .dark\:text-gray-400 {
+  @apply dark:text-gray-300;
+}
+
+/* Fix button and interactive element contrasts */
+.bg-gray-200 {
+  @apply bg-gray-300;
+}
+
+.hover\:bg-gray-50:hover {
+  @apply hover:bg-gray-100;
+}
+
+/* Ensure form inputs have proper contrast */
+input, textarea, select {
+  @apply text-gray-900 dark:text-gray-100;
+}
+
+/* Fix disabled state contrast */
+.bg-gray-300:disabled {
+  @apply bg-gray-400;
+}
+
+/* Ensure proper label contrast */
+label {
+  @apply text-gray-700 dark:text-gray-200;
+}
+
+/* Fix modal backdrop opacity */
+.bg-opacity-75 {
+  @apply bg-opacity-50;
+}
+
+.dark .dark\:bg-opacity-75 {
+  @apply dark:bg-opacity-50;
+}

@@ -65,10 +65,13 @@
                 {{ $t('admin.users.userProfile') }}
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                Pays / Langue
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 {{ $t('admin.users.registrationDate') }}
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                {{ $t('admin.users.lastLogin') }}
+                Dernière Activité
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 {{ $t('admin.users.walletBalance') }}
@@ -82,7 +85,12 @@
             </tr>
           </thead>
           <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            <tr v-for="user in filteredUsers" :key="user.id">
+            <tr v-if="filteredUsers.length === 0">
+              <td colspan="7" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                {{ adminStore.isLoading ? 'Chargement des utilisateurs...' : 'Aucun utilisateur trouvé' }}
+              </td>
+            </tr>
+            <tr v-for="user in filteredUsers" :key="user?.id || Math.random()">
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="flex items-center">
                   <div class="flex-shrink-0 h-10 w-10">
@@ -92,32 +100,46 @@
                   </div>
                   <div class="ml-4">
                     <div class="text-sm font-medium text-gray-900 dark:text-white">
-                      {{ user.username || user.display_name || 'Utilisateur' }}
+                      {{ user?.username || user?.display_name || 'Utilisateur' }}
                     </div>
                     <div class="text-sm text-gray-500 dark:text-gray-400">
-                      {{ user.email }}
+                      {{ user?.metadata?.email || 'Email non disponible' }}
                     </div>
                   </div>
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                {{ formatDate(user.created_at) }}
+                <div class="flex flex-col">
+                  <span class="font-medium">{{ getCountryFlag(user?.country_code) }} {{ user?.country_code || 'N/A' }}</span>
+                  <span class="text-xs text-gray-400">{{ user?.language_code?.toUpperCase() || 'EN' }}</span>
+                </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                {{ formatDate(user.last_login) }}
+                {{ formatDate(user?.created_at) }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                {{ user.wallets?.[0]?.balance || 0 }} points
+                <div class="flex flex-col">
+                  <span>{{ formatDate(user?.updated_at) }}</span>
+                  <span v-if="isRecentlyActive(user?.updated_at)" class="text-xs text-green-600 dark:text-green-400">
+                    Récent
+                  </span>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                <div class="flex flex-col">
+                  <span class="font-medium">{{ getWalletBalance(user) }} points</span>
+                  <span class="text-xs text-gray-400">{{ user.wallets?.[0]?.currency || 'USD' }}</span>
+                </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="flex items-center space-x-2">
-                  <span v-if="user.is_admin" 
+                  <span v-if="user?.is_admin" 
                         class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">
                     Admin
                   </span>
-                  <span :class="user.is_active ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'"
+                  <span :class="isUserActive(user) ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'"
                         class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
-                    {{ user.is_active ? $t('admin.common.active') : $t('admin.common.inactive') }}
+                    {{ isUserActive(user) ? $t('admin.common.active') : $t('admin.common.inactive') }}
                   </span>
                 </div>
               </td>
@@ -127,20 +149,23 @@
                     @click="viewUserDetails(user)"
                     class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                     :title="$t('admin.common.view')"
+                    :disabled="!user"
                   >
                     <font-awesome-icon icon="eye" />
                   </button>
                   <button
                     @click="toggleAdminStatus(user)"
-                    :class="user.is_admin ? 'text-red-600 hover:text-red-900 dark:text-red-400' : 'text-green-600 hover:text-green-900 dark:text-green-400'"
-                    :title="user.is_admin ? $t('admin.users.removeAdmin') : $t('admin.users.makeAdmin')"
+                    :class="user?.is_admin ? 'text-red-600 hover:text-red-900 dark:text-red-400' : 'text-green-600 hover:text-green-900 dark:text-green-400'"
+                    :title="user?.is_admin ? $t('admin.users.removeAdmin') : $t('admin.users.makeAdmin')"
+                    :disabled="!user"
                   >
-                    <font-awesome-icon :icon="user.is_admin ? 'user-minus' : 'user-plus'" />
+                    <font-awesome-icon :icon="user?.is_admin ? 'user-minus' : 'user-plus'" />
                   </button>
                   <button
                     @click="viewUserTransactions(user)"
                     class="text-yellow-600 hover:text-yellow-900 dark:text-yellow-400 dark:hover:text-yellow-300"
                     :title="$t('admin.users.viewTransactions')"
+                    :disabled="!user"
                   >
                     <font-awesome-icon icon="coins" />
                   </button>
@@ -214,7 +239,7 @@ const adminUsers = computed(() => {
 const activeUsers = computed(() => {
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
   return adminStore.users.filter(user => 
-    user.last_login && new Date(user.last_login) > thirtyDaysAgo
+    user.updated_at && new Date(user.updated_at) > thirtyDaysAgo
   )
 })
 
@@ -237,6 +262,39 @@ function formatCurrency(amount) {
     style: 'currency',
     currency: 'EUR'
   }).format(amount)
+}
+
+function getCountryFlag(countryCode) {
+  if (!countryCode) return '🌍'
+  
+  // Convert country code to flag emoji
+  const flagMap = {
+    'US': '🇺🇸', 'CI': '🇨🇮', 'FR': '🇫🇷', 'CA': '🇨🇦', 
+    'GB': '🇬🇧', 'DE': '🇩🇪', 'JP': '🇯🇵', 'BR': '🇧🇷', 'IN': '🇮🇳'
+  }
+  
+  return flagMap[countryCode] || '🌍'
+}
+
+function isRecentlyActive(dateString) {
+  if (!dateString) return false
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+  return new Date(dateString) > sevenDaysAgo
+}
+
+function isUserActive(user) {
+  // User is considered active if they've been updated recently (proxy for activity)
+  // or if they have recent transactions
+  return isRecentlyActive(user.updated_at)
+}
+
+function getWalletBalance(user) {
+  if (!user?.wallets || !Array.isArray(user.wallets) || user.wallets.length === 0) {
+    return 0
+  }
+  
+  const wallet = user.wallets[0]
+  return wallet?.balance || 0
 }
 
 function viewUserDetails(user) {
@@ -285,9 +343,21 @@ async function refreshUserStats() {
 
 // Lifecycle
 onMounted(async () => {
-  await Promise.all([
-    adminStore.fetchUsers(),
-    adminStore.fetchWalletTransactions()
-  ])
+  try {
+    // Essayer d'abord la méthode normale
+    await adminStore.fetchUsers()
+    
+    // Si aucun wallet n'est trouvé, essayer la méthode alternative
+    const hasWallets = adminStore.users.some(user => user.wallets && user.wallets.length > 0)
+    
+    if (!hasWallets) {
+      await adminStore.fetchUsersWithWallets()
+    }
+    
+    // Charger aussi les transactions
+    await adminStore.fetchWalletTransactions()
+  } catch (error) {
+    console.error('Erreur lors du chargement des données utilisateur:', error)
+  }
 })
 </script>

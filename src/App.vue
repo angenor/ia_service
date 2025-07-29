@@ -62,7 +62,7 @@ onMounted(() => {
                 <div v-if="authStore.userProfile?.is_admin" class="flex items-center">
                   <RouterLink 
                     to="/admin" 
-                    class="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    class="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                   >
                     <font-awesome-icon icon="cog" />
                     <span>Admin</span>

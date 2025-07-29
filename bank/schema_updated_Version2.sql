@@ -285,94 +285,161 @@ ALTER TABLE public.price_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.system_config ENABLE ROW LEVEL SECURITY;
 
 -- Policies pour les utilisateurs (noms simplifiés et non récursifs)
-CREATE POLICY "profiles_select_own" ON public.profiles
+CREATE POLICY "Users can view own profile" ON public.profiles
     FOR SELECT USING (auth.uid() = id);
 
-CREATE POLICY "profiles_insert_own" ON public.profiles
+CREATE POLICY "Users can insert own profile" ON public.profiles
     FOR INSERT WITH CHECK (auth.uid() = id);
 
-CREATE POLICY "profiles_update_own" ON public.profiles
-    FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
+CREATE POLICY "Users can update own profile" ON public.profiles
+    FOR UPDATE USING (auth.uid() = id);
 
-CREATE POLICY "profiles_delete_own" ON public.profiles
+CREATE POLICY "Users can delete own profile" ON public.profiles
     FOR DELETE USING (auth.uid() = id);
 
-CREATE POLICY "wallets_select_own" ON public.wallets
+CREATE POLICY "Users can view own wallet" ON public.wallets
     FOR SELECT USING (auth.uid() = user_id);
 
-CREATE POLICY "wallets_insert_own" ON public.wallets
+CREATE POLICY "Users can create own wallet" ON public.wallets
     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "wallets_update_own" ON public.wallets
-    FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own wallet" ON public.wallets
+    FOR UPDATE USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can view active services" ON public.ai_services
+CREATE POLICY "Active AI services are viewable by everyone" ON public.ai_services
     FOR SELECT USING (is_active = true);
 
-CREATE POLICY "Users can view service categories" ON public.service_categories
+CREATE POLICY "Service categories are viewable by everyone" ON public.service_categories
     FOR SELECT USING (is_active = true);
 
-CREATE POLICY "Users can view service subcategories" ON public.service_subcategories
+CREATE POLICY "Service subcategories are viewable by everyone" ON public.service_subcategories
     FOR SELECT USING (is_active = true);
 
-CREATE POLICY "Users can view pricing for their country" ON public.service_pricing_by_country
-    FOR SELECT USING (
-        country_code = (SELECT country_code FROM public.profiles WHERE id = auth.uid())
-    );
+CREATE POLICY "Service pricing viewable by country" ON public.service_pricing_by_country
+    FOR SELECT USING (true);
+
+CREATE POLICY "Service availability viewable by everyone" ON public.service_availability
+    FOR SELECT USING (true);
+
+CREATE POLICY "Active promotions viewable by everyone" ON public.promotions
+    FOR SELECT USING (is_active = true AND (valid_until IS NULL OR valid_until > NOW()));
+
+CREATE POLICY "Users can view own promotion usage" ON public.promotion_usage
+    FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can create own promotion usage" ON public.promotion_usage
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Users can view own transactions" ON public.wallet_transactions
-    FOR SELECT USING (wallet_id IN (SELECT id FROM public.wallets WHERE user_id = auth.uid()));
+    FOR SELECT USING (
+        wallet_id IN (
+            SELECT id FROM public.wallets WHERE user_id = auth.uid()
+        )
+    );
 
-CREATE POLICY "Users can view own usage" ON public.service_usage
-    FOR SELECT USING (user_id = auth.uid());
+CREATE POLICY "Users can create own transactions" ON public.wallet_transactions
+    FOR INSERT WITH CHECK (
+        wallet_id IN (
+            SELECT id FROM public.wallets WHERE user_id = auth.uid()
+        )
+    );
 
-CREATE POLICY "Users can create usage records" ON public.service_usage
-    FOR INSERT WITH CHECK (user_id = auth.uid());
+CREATE POLICY "Users can view own service usage" ON public.service_usage
+    FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can create own service usage" ON public.service_usage
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own service usage" ON public.service_usage
+    FOR UPDATE USING (auth.uid() = user_id);
 
 -- Policies pour les administrateurs
-CREATE POLICY "Admins can do everything on profiles" ON public.profiles
+CREATE POLICY "Admins have full access to profiles" ON public.profiles
     FOR ALL USING (
-        EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_admin = true)
+        EXISTS (
+            SELECT 1 FROM public.profiles 
+            WHERE id = auth.uid() AND is_admin = true
+        )
     );
 
 CREATE POLICY "Admins can manage services" ON public.ai_services
     FOR ALL USING (
-        EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_admin = true)
+        EXISTS (
+            SELECT 1 FROM public.profiles 
+            WHERE id = auth.uid() AND is_admin = true
+        )
     );
 
 CREATE POLICY "Admins can manage categories" ON public.service_categories
     FOR ALL USING (
-        EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_admin = true)
+        EXISTS (
+            SELECT 1 FROM public.profiles 
+            WHERE id = auth.uid() AND is_admin = true
+        )
     );
 
 CREATE POLICY "Admins can manage subcategories" ON public.service_subcategories
     FOR ALL USING (
-        EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_admin = true)
+        EXISTS (
+            SELECT 1 FROM public.profiles 
+            WHERE id = auth.uid() AND is_admin = true
+        )
     );
 
 CREATE POLICY "Admins can manage pricing" ON public.service_pricing_by_country
     FOR ALL USING (
-        EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_admin = true)
+        EXISTS (
+            SELECT 1 FROM public.profiles 
+            WHERE id = auth.uid() AND is_admin = true
+        )
     );
 
-CREATE POLICY "Admins can view all wallets" ON public.wallets
-    FOR SELECT USING (
-        EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_admin = true)
+CREATE POLICY "Admins have full access to wallets" ON public.wallets
+    FOR ALL USING (
+        EXISTS (
+            SELECT 1 FROM public.profiles 
+            WHERE id = auth.uid() AND is_admin = true
+        )
+    );
+
+CREATE POLICY "Admins have full access to wallet_transactions" ON public.wallet_transactions
+    FOR ALL USING (
+        EXISTS (
+            SELECT 1 FROM public.profiles 
+            WHERE id = auth.uid() AND is_admin = true
+        )
+    );
+
+CREATE POLICY "Admins have full access to service_usage" ON public.service_usage
+    FOR ALL USING (
+        EXISTS (
+            SELECT 1 FROM public.profiles 
+            WHERE id = auth.uid() AND is_admin = true
+        )
     );
 
 CREATE POLICY "Admins can manage promotions" ON public.promotions
     FOR ALL USING (
-        EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_admin = true)
+        EXISTS (
+            SELECT 1 FROM public.profiles 
+            WHERE id = auth.uid() AND is_admin = true
+        )
     );
 
 CREATE POLICY "Admins can view price history" ON public.price_history
     FOR ALL USING (
-        EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_admin = true)
+        EXISTS (
+            SELECT 1 FROM public.profiles 
+            WHERE id = auth.uid() AND is_admin = true
+        )
     );
 
 CREATE POLICY "Admins can manage system config" ON public.system_config
     FOR ALL USING (
-        EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_admin = true)
+        EXISTS (
+            SELECT 1 FROM public.profiles 
+            WHERE id = auth.uid() AND is_admin = true
+        )
     );
 
 -- =====================================================
@@ -526,6 +593,135 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Function to safely add points to wallet (with transaction)
+CREATE OR REPLACE FUNCTION public.add_wallet_points(
+    p_amount INTEGER,
+    p_payment_method VARCHAR(50) DEFAULT 'simulation',
+    p_payment_reference TEXT DEFAULT NULL
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_wallet_id UUID;
+    v_new_balance INTEGER;
+    v_transaction_id UUID;
+BEGIN
+    -- Get user's wallet
+    SELECT id, balance INTO v_wallet_id, v_new_balance
+    FROM wallets
+    WHERE user_id = auth.uid()
+    FOR UPDATE;
+    
+    IF v_wallet_id IS NULL THEN
+        RAISE EXCEPTION 'Wallet not found for user';
+    END IF;
+    
+    -- Calculate new balance
+    v_new_balance := v_new_balance + p_amount;
+    
+    -- Update wallet balance
+    UPDATE wallets
+    SET balance = v_new_balance,
+        updated_at = NOW()
+    WHERE id = v_wallet_id;
+    
+    -- Create transaction record
+    INSERT INTO wallet_transactions (
+        wallet_id,
+        amount,
+        type,
+        payment_method,
+        payment_reference,
+        status,
+        completed_at
+    ) VALUES (
+        v_wallet_id,
+        p_amount,
+        'deposit',
+        p_payment_method,
+        COALESCE(p_payment_reference, 'SIM-' || extract(epoch from NOW())::TEXT),
+        'completed',
+        NOW()
+    ) RETURNING id INTO v_transaction_id;
+    
+    -- Return result
+    RETURN jsonb_build_object(
+        'success', true,
+        'transaction_id', v_transaction_id,
+        'new_balance', v_new_balance
+    );
+EXCEPTION
+    WHEN OTHERS THEN
+        RETURN jsonb_build_object(
+            'success', false,
+            'error', SQLERRM
+        );
+END;
+$$;
+
+-- Function to use points from wallet
+CREATE OR REPLACE FUNCTION public.use_wallet_points(
+    p_amount INTEGER,
+    p_service_id UUID DEFAULT NULL,
+    p_metadata JSONB DEFAULT '{}'
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_wallet_id UUID;
+    v_current_balance INTEGER;
+    v_new_balance INTEGER;
+BEGIN
+    -- Get user's wallet with lock
+    SELECT id, balance INTO v_wallet_id, v_current_balance
+    FROM wallets
+    WHERE user_id = auth.uid()
+    FOR UPDATE;
+    
+    IF v_wallet_id IS NULL THEN
+        RAISE EXCEPTION 'Wallet not found for user';
+    END IF;
+    
+    -- Check sufficient balance
+    IF v_current_balance < p_amount THEN
+        RETURN jsonb_build_object(
+            'success', false,
+            'error', 'Insufficient balance',
+            'current_balance', v_current_balance,
+            'required_amount', p_amount
+        );
+    END IF;
+    
+    -- Calculate new balance
+    v_new_balance := v_current_balance - p_amount;
+    
+    -- Update wallet balance
+    UPDATE wallets
+    SET balance = v_new_balance,
+        updated_at = NOW()
+    WHERE id = v_wallet_id;
+    
+    -- Return result
+    RETURN jsonb_build_object(
+        'success', true,
+        'new_balance', v_new_balance,
+        'amount_used', p_amount
+    );
+EXCEPTION
+    WHEN OTHERS THEN
+        RETURN jsonb_build_object(
+            'success', false,
+            'error', SQLERRM
+        );
+END;
+$$;
+
 -- Fonction améliorée pour déduire les points du wallet avec prix par pays
 CREATE OR REPLACE FUNCTION deduct_wallet_points(
     p_user_id UUID,
@@ -613,6 +809,8 @@ GRANT ALL ON public.profiles TO postgres, service_role;
 GRANT SELECT, UPDATE ON public.profiles TO authenticated;
 GRANT SELECT ON public.profiles TO anon;
 GRANT EXECUTE ON FUNCTION public.get_user_profile(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.add_wallet_points TO authenticated;
+GRANT EXECUTE ON FUNCTION public.use_wallet_points TO authenticated;
 
 -- =====================================================
 -- INDEX POUR LES PERFORMANCES

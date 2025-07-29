@@ -14,11 +14,11 @@
                   {{ $t('payment.title') }}
                 </h3>
                 <div class="mt-4">
-                  <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                  <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
                     {{ $t('payment.subtitle') }}
                   </p>
                   
-                  <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-4">
+                  <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg mb-4">
                     <p class="text-sm font-medium text-gray-900 dark:text-white">
                       {{ $t('payment.currentBalance') }}: 
                       <span class="text-2xl text-primary-600 dark:text-primary-400">{{ currentPoints }}</span> {{ $t('payment.points') }}
@@ -42,7 +42,7 @@
                           <h4 class="text-lg font-medium text-gray-900 dark:text-white">
                             {{ pack.points }} {{ $t('payment.points') }}
                           </h4>
-                          <p class="text-sm text-gray-500 dark:text-gray-400">
+                          <p class="text-sm text-gray-600 dark:text-gray-300">
                             {{ pack.bonus > 0 ? `+${pack.bonus} ${$t('payment.bonusPoints')}` : '' }}
                           </p>
                         </div>
@@ -65,12 +65,12 @@
 
                   <div v-if="selectedPack" class="mt-6 border-t dark:border-gray-700 pt-4">
                     <div class="flex justify-between text-sm mb-2">
-                      <span class="text-gray-600 dark:text-gray-400">{{ $t('payment.subtotal') }}</span>
+                      <span class="text-gray-600 dark:text-gray-300">{{ $t('payment.subtotal') }}</span>
                       <span class="text-gray-900 dark:text-white">{{ formatPrice(selectedPack.price) }}</span>
                     </div>
                     <div class="flex justify-between text-lg font-medium">
                       <span class="text-gray-900 dark:text-white">{{ $t('payment.total') }}</span>
-                      <span class="text-primary-600 dark:text-primary-400">
+                      <span class="text-primary-600 dark:text-white">
                         {{ selectedPack.points + selectedPack.bonus }} {{ $t('payment.points') }}
                       </span>
                     </div>
@@ -83,16 +83,16 @@
               </div>
             </div>
           </div>
-          <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <div class="bg-gray-100 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
             <button
               type="button"
               @click="purchase"
               :disabled="!selectedPack || processing"
               :class="[
-                'w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white sm:ml-3 sm:w-auto sm:text-sm',
+                'w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium sm:ml-3 sm:w-auto sm:text-sm',
                 !selectedPack || processing
-                  ? 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed'
-                  : 'bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500'
+                  ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed'
+                  : 'bg-primary-600 hover:bg-primary-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500'
               ]"
             >
               {{ processing ? $t('payment.processing') : $t('payment.purchase') }}

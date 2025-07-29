@@ -56,15 +56,20 @@
             </tr>
           </thead>
           <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            <tr v-for="category in adminStore.serviceCategories" :key="category.id">
+            <tr v-for="category in aiServicesStore.categories" :key="category.id">
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                 {{ category.name }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                <font-awesome-icon :icon="category.icon" class="text-lg" />
+                <font-awesome-icon 
+                  :icon="getValidIcon(category.icon)" 
+                  class="text-lg" 
+                  v-if="getValidIcon(category.icon)"
+                />
+                <span v-else class="text-gray-400 italic">Aucune icône</span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                {{ category.display_order }}
+                {{ category.sort_order }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <span :class="category.is_active ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'"
@@ -126,7 +131,7 @@
             </tr>
           </thead>
           <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            <tr v-for="subcategory in adminStore.serviceSubcategories" :key="subcategory.id">
+            <tr v-for="subcategory in aiServicesStore.subcategories" :key="subcategory.id">
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                 {{ subcategory.name }}
               </td>
@@ -196,11 +201,11 @@
             </tr>
           </thead>
           <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            <tr v-for="service in adminStore.aiServices" :key="service.id">
+            <tr v-for="service in aiServicesStore.services" :key="service.id">
               <td class="px-6 py-4 whitespace-nowrap">
                 <div>
                   <div class="text-sm font-medium text-gray-900 dark:text-white">
-                    {{ service.display_name || service.name }}
+                    {{ service.name }}
                   </div>
                   <div class="text-sm text-gray-500 dark:text-gray-400">
                     {{ service.description }}
@@ -211,7 +216,7 @@
                 {{ service.provider }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                {{ service.service_subcategories?.name }}
+                {{ service.service_subcategories?.name || service.service_categories?.name }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <span :class="service.is_active ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'"
@@ -220,7 +225,7 @@
                 </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <span v-if="service.is_new && isNewBadgeActive(service.new_badge_until)"
+                <span v-if="service.is_new && isNewBadgeActive(service.new_until)"
                       class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
                   Nouveau
                 </span>
@@ -256,7 +261,7 @@
     <SubcategoryModal
       v-if="showSubcategoryModal"
       :subcategory="selectedSubcategory"
-      :categories="adminStore.serviceCategories"
+      :categories="aiServicesStore.categories"
       @close="closeSubcategoryModal"
       @save="saveSubcategory"
     />
@@ -264,7 +269,7 @@
     <ServiceModal
       v-if="showServiceModal"
       :service="selectedService"
-      :subcategories="adminStore.serviceSubcategories"
+      :subcategories="aiServicesStore.subcategories"
       @close="closeServiceModal"
       @save="saveService"
     />
@@ -274,6 +279,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useAdminStore } from '@/stores/admin'
+import { useAIServicesStore } from '@/stores/aiServices'
 import { useI18n } from 'vue-i18n'
 
 // Composants modaux
@@ -283,6 +289,7 @@ import ServiceModal from './modals/ServiceModal.vue'
 
 const { t } = useI18n()
 const adminStore = useAdminStore()
+const aiServicesStore = useAIServicesStore()
 
 // État local
 const activeServiceTab = ref('categories')
@@ -306,6 +313,24 @@ function isNewBadgeActive(badgeUntil) {
   return new Date(badgeUntil) > new Date()
 }
 
+function getValidIcon(iconName) {
+  if (!iconName) return null
+  // Liste des icônes disponibles dans notre configuration
+  const availableIcons = [
+    'sun', 'moon', 'globe', 'chevron-up', 'chevron-down', 'chevron-left',
+    'home', 'info-circle', 'plus', 'flask', 'cog', 'image', 'music', 'video',
+    'tools', 'project-diagram', 'file-pdf', 'book', 'brain', 'star', 'search',
+    'coins', 'user', 'arrow-right', 'volume-up', 'microphone', 'magic', 'code',
+    'envelope', 'play', 'robot', 'file-video', 'palette', 'wand-magic-sparkles',
+    'language', 'eye', 'comments', 'sign-out-alt', 'sign-in-alt', 'times',
+    'cloud-upload-alt', 'file', 'camera', 'check-circle', 'laptop', 'chart-line',
+    'cogs', 'dollar-sign', 'tags', 'users', 'exclamation-triangle', 'edit',
+    'trash', 'download', 'upload', 'sync', 'user-minus', 'user-plus', 'chart-bar'
+  ]
+  
+  return availableIcons.includes(iconName) ? iconName : 'cogs'
+}
+
 // Gestion des catégories
 function openCategoryModal(category = null) {
   selectedCategory.value = category
@@ -320,9 +345,9 @@ function closeCategoryModal() {
 async function saveCategory(categoryData) {
   try {
     if (selectedCategory.value) {
-      await adminStore.updateServiceCategory(selectedCategory.value.id, categoryData)
+      await aiServicesStore.updateCategory(selectedCategory.value.id, categoryData)
     } else {
-      await adminStore.createServiceCategory(categoryData)
+      await aiServicesStore.createCategory(categoryData)
     }
     closeCategoryModal()
   } catch (error) {
@@ -333,7 +358,7 @@ async function saveCategory(categoryData) {
 async function deleteCategory(category) {
   if (confirm(t('admin.services.confirmDelete'))) {
     try {
-      await adminStore.deleteServiceCategory(category.id)
+      await aiServicesStore.deleteCategory(category.id)
     } catch (error) {
       console.error('Erreur lors de la suppression de la catégorie:', error)
     }
@@ -354,9 +379,9 @@ function closeSubcategoryModal() {
 async function saveSubcategory(subcategoryData) {
   try {
     if (selectedSubcategory.value) {
-      await adminStore.updateServiceSubcategory(selectedSubcategory.value.id, subcategoryData)
+      await aiServicesStore.updateSubcategory(selectedSubcategory.value.id, subcategoryData)
     } else {
-      await adminStore.createServiceSubcategory(subcategoryData)
+      await aiServicesStore.createSubcategory(subcategoryData)
     }
     closeSubcategoryModal()
   } catch (error) {
@@ -367,7 +392,7 @@ async function saveSubcategory(subcategoryData) {
 async function deleteSubcategory(subcategory) {
   if (confirm(t('admin.services.confirmDelete'))) {
     try {
-      await adminStore.deleteServiceSubcategory(subcategory.id)
+      await aiServicesStore.deleteSubcategory(subcategory.id)
     } catch (error) {
       console.error('Erreur lors de la suppression de la sous-catégorie:', error)
     }
@@ -388,9 +413,9 @@ function closeServiceModal() {
 async function saveService(serviceData) {
   try {
     if (selectedService.value) {
-      await adminStore.updateAiService(selectedService.value.id, serviceData)
+      await aiServicesStore.updateService(selectedService.value.id, serviceData)
     } else {
-      await adminStore.createAiService(serviceData)
+      await aiServicesStore.createService(serviceData)
     }
     closeServiceModal()
   } catch (error) {
@@ -401,7 +426,7 @@ async function saveService(serviceData) {
 async function deleteService(service) {
   if (confirm(t('admin.services.confirmDelete'))) {
     try {
-      await adminStore.deleteAiService(service.id)
+      await aiServicesStore.deleteService(service.id)
     } catch (error) {
       console.error('Erreur lors de la suppression du service:', error)
     }
@@ -410,10 +435,6 @@ async function deleteService(service) {
 
 // Lifecycle
 onMounted(async () => {
-  await Promise.all([
-    adminStore.fetchServiceCategories(),
-    adminStore.fetchServiceSubcategories(),
-    adminStore.fetchAiServices()
-  ])
+  await aiServicesStore.fetchAllData()
 })
 </script>

@@ -474,11 +474,12 @@ export const useAdminStore = defineStore('admin', () => {
     setLoading(true)
     clearError()
     try {
+      // Première tentative avec la relation normale
       const { data, error: dbError } = await supabase
         .from('profiles')
         .select(`
           *,
-          wallets (
+          wallets!wallets_user_id_fkey (
             id,
             balance,
             currency,
@@ -488,10 +489,121 @@ export const useAdminStore = defineStore('admin', () => {
         `)
         .order('created_at', { ascending: false })
       
-      if (dbError) throw dbError
+      if (dbError) {
+        console.error('Error with explicit foreign key relation:', dbError)
+        // Fallback: essayer sans spécifier la clé étrangère
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('profiles')
+          .select(`
+            id,
+            username,
+            display_name,
+            country_code,
+            language_code,
+            created_at,
+            updated_at,
+            is_admin,
+            metadata,
+            wallets (*)
+          `)
+          .order('created_at', { ascending: false })
+        
+        if (fallbackError) {
+          throw fallbackError
+        }
+        
+        users.value = fallbackData || []
+        return
+      }
+      
       users.value = data || []
+      
     } catch (err) {
       setError(err.message)
+      console.error('Error fetching users:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Fonction de test pour vérifier les permissions admin
+  async function testAdminPermissions() {
+    try {
+      // Vérifier l'utilisateur actuel
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      if (authError) {
+        console.error('Auth error:', authError)
+        return false
+      }
+      
+      // Vérifier le profil de l'utilisateur actuel
+      const { data: currentProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user?.id)
+        .single()
+      
+      if (profileError) {
+        console.error('Profile error:', profileError)
+        return false
+      }
+      
+      // Test d'accès direct aux wallets
+      const { data: testWallets, error: walletError } = await supabase
+        .from('wallets')
+        .select('*')
+        .limit(5)
+      
+      if (walletError) {
+        console.error('Wallet access error:', walletError)  
+        return false
+      }
+      
+      return true
+      
+    } catch (error) {
+      console.error('Error testing admin permissions:', error)
+      return false
+    }
+  }
+
+  // Fonction alternative pour récupérer les utilisateurs avec leurs wallets
+  async function fetchUsersWithWallets() {
+    setLoading(true)
+    clearError()
+    try {
+      // Récupérer d'abord tous les profils
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false })
+      
+      if (profilesError) throw profilesError
+      
+      // Ensuite récupérer tous les wallets
+      const { data: wallets, error: walletsError } = await supabase
+        .from('wallets')
+        .select('*')
+      
+      if (walletsError) {
+        console.error('Error fetching wallets:', walletsError)
+        // Continuer même si les wallets échouent
+      }
+      
+      // Associer manuellement les wallets aux profils
+      const usersWithWallets = profiles.map(profile => {
+        const userWallets = wallets ? wallets.filter(wallet => wallet.user_id === profile.id) : []
+        return {
+          ...profile,
+          wallets: userWallets
+        }
+      })
+      
+      users.value = usersWithWallets
+      
+    } catch (err) {
+      setError(err.message)
+      console.error('Error in fetchUsersWithWallets:', err)
     } finally {
       setLoading(false)
     }
@@ -840,6 +952,8 @@ export const useAdminStore = defineStore('admin', () => {
 
     // Utilisateurs
     fetchUsers,
+    fetchUsersWithWallets,
+    testAdminPermissions,
     fetchUserStatistics,
     updateUserStatus,
     syncUserProfile,
