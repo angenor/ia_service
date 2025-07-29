@@ -162,6 +162,20 @@
     "save": "Enregistrer",
     "saving": "Enregistrement..."
   },
+  "payment": {
+    "title": "Acheter des points",
+    "subtitle": "Sélectionnez un pack de points pour continuer",
+    "currentBalance": "Solde actuel",
+    "points": "points",
+    "bonusPoints": "points bonus",
+    "save": "Économisez",
+    "popular": "POPULAIRE",
+    "subtotal": "Sous-total",
+    "total": "Total de points",
+    "purchase": "Acheter",
+    "processing": "Traitement...",
+    "cancel": "Annuler"
+  },
   "settings": {
     "title": "Paramètres",
     "appearance": {

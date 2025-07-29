@@ -1,18 +1,24 @@
 <script setup>
-import { onMounted, computed } from 'vue'
+import { onMounted, computed, ref } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import HelloWorld from './components/HelloWorld.vue'
 import ThemeToggle from './components/ui/ThemeToggle.vue'
 import LanguageSelector from './components/ui/LanguageSelector.vue'
 import AppSideBar from './components/AppSideBar.vue'
+import PaymentModal from './components/ui/PaymentModal.vue'
 import { useThemeStore } from './stores/theme'
 import { useLocaleStore } from './stores/locale'
 import { useAuthStore } from './stores/auth'
+import { useUserStore } from './stores/user'
 
 const themeStore = useThemeStore()
 const localeStore = useLocaleStore()
 const authStore = useAuthStore()
+const userStore = useUserStore()
 const route = useRoute()
+
+// State for payment modal
+const showPaymentModal = ref(false)
 
 // Computed pour déterminer si on est sur la page admin
 const isAdminPage = computed(() => {
@@ -44,10 +50,13 @@ onMounted(() => {
               
               <div class="flex items-center space-x-4">
                 <!-- Wallet Points -->
-                <div class="flex items-center space-x-2 px-3 py-1 bg-yellow-100 dark:bg-yellow-900/20 rounded-full">
-                  <span class="text-sm font-medium text-gray-900 dark:text-white">1230 points</span>
+                <button 
+                  @click="showPaymentModal = true"
+                  class="flex items-center space-x-2 px-3 py-1 bg-yellow-100 dark:bg-yellow-900/20 rounded-full hover:bg-yellow-200 dark:hover:bg-yellow-900/30 transition-colors cursor-pointer"
+                >
+                  <span class="text-sm font-medium text-gray-900 dark:text-white">{{ userStore.formattedPoints }} {{ $t('payment.points') }}</span>
                   <font-awesome-icon icon="coins" class="text-yellow-500" />
-                </div>
+                </button>
                 
                 <!-- Admin Link (if admin) -->
                 <div v-if="authStore.userProfile?.is_admin" class="flex items-center">
@@ -87,6 +96,12 @@ onMounted(() => {
     <template v-else>
       <RouterView />
     </template>
+
+    <!-- Payment Modal -->
+    <PaymentModal 
+      :is-open="showPaymentModal" 
+      @close="showPaymentModal = false" 
+    />
   </div>
 </template>
 

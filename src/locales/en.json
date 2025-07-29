@@ -162,6 +162,20 @@
     "save": "Save",
     "saving": "Saving..."
   },
+  "payment": {
+    "title": "Buy Points",
+    "subtitle": "Select a points package to continue",
+    "currentBalance": "Current balance",
+    "points": "points",
+    "bonusPoints": "bonus points",
+    "save": "Save",
+    "popular": "POPULAR",
+    "subtotal": "Subtotal",
+    "total": "Total points",
+    "purchase": "Purchase",
+    "processing": "Processing...",
+    "cancel": "Cancel"
+  },
   "settings": {
     "title": "Settings",
     "appearance": {
