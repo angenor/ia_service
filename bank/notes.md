@@ -12,3 +12,17 @@ Il semble que LLMService n'utilise pas les informations de mes modèles dans la 
 
 
 N8N
+
+
+Corps de la requête: {
+  "model": "qwen/qwen3-coder:free",
+  "messages": [
+    {
+      "role": "user",
+      "content": "salut comment tu t'appel et quel est ton role"
+    }
+  ],
+  "temperature": 0.7,
+  "max_tokens": 4096,
+  "stream": false
+}

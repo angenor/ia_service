@@ -1,16 +1,47 @@
-ERROR:  23502: null value in column "service_id" of relation "service_model_abilities" violates not-null constraint
-DETAIL:  Failing row contains (34655d1a-0364-48b2-823b-4ed22f4337f5, null, c2b434d1-21bb-47be-8eb1-ccdad9cdbdc4, 1.00, {}, t, 2025-07-31 00:00:44.488848+00, 2025-07-31 00:00:44.488848+00).
-CONTEXT:  SQL statement "INSERT INTO public.service_model_abilities (service_id, ability_id, cost_multiplier, is_active)
-    SELECT 
-        (SELECT id FROM public.ai_services WHERE slug = 'gemini-2-5-flash'),
-        unnest(ARRAY[v_chat_ability_id, v_code_ability_id, v_creative_ability_id, v_vision_ability_id]),
-        1.0,
-        true
-    ON CONFLICT (service_id, ability_id) DO UPDATE SET
-        cost_multiplier = EXCLUDED.cost_multiplier,
-        is_active = EXCLUDED.is_active"
-PL/pgSQL function inline_code_block line 95 at SQL statement
+⚠️ Content-Type inattendu: text/event-stream LLMService.vue:235:15
+Contenu brut reçu: : OPENROUTER PROCESSING
 
+data: {"id":"gen-1753932698-cukvHDojm0vTvKTrYY7r","provider":"Google","model":"google/gemini-2.5-flash","object":"chat.completion.chunk","created":1753932698,"choices":[{"index":0,"delta":{"role":"assistant","content":"Salut","reasoning":null,"reasoning_details":[]},"finish_reason":null,"native_finish_reason":null,"logprobs":null}]}
 
-Debug with Assistant
-
+data: {"id":"gen-1753932698-cukvHDojm0vTvKTrYY7r","provider":"Google","model":"google/gemini-2.5-flash","object":"chat.completion.chunk","c LLMService.vue:237:15
+LLM Error: Error: La réponse n'est pas du JSON valide
+    handleGenerate LLMService.vue:238
+    callWithErrorHandling runtime-core.esm-bundler.js:199
+    callWithAsyncErrorHandling runtime-core.esm-bundler.js:206
+    emit runtime-core.esm-bundler.js:6439
+    createSetupContext/get emit/< runtime-core.esm-bundler.js:8152
+    handleGenerate ServiceInputSection.vue:519
+    callWithErrorHandling runtime-core.esm-bundler.js:199
+    callWithAsyncErrorHandling runtime-core.esm-bundler.js:206
+    invoker runtime-dom.esm-bundler.js:729
+    addEventListener runtime-dom.esm-bundler.js:680
+    patchEvent runtime-dom.esm-bundler.js:698
+    patchProp runtime-dom.esm-bundler.js:775
+    mountElement runtime-core.esm-bundler.js:4900
+    processElement runtime-core.esm-bundler.js:4847
+    patch runtime-core.esm-bundler.js:4715
+    mountChildren runtime-core.esm-bundler.js:4959
+    mountElement runtime-core.esm-bundler.js:4882
+    processElement runtime-core.esm-bundler.js:4847
+    patch runtime-core.esm-bundler.js:4715
+    mountChildren runtime-core.esm-bundler.js:4959
+    mountElement runtime-core.esm-bundler.js:4882
+    processElement runtime-core.esm-bundler.js:4847
+    patch runtime-core.esm-bundler.js:4715
+    mountChildren runtime-core.esm-bundler.js:4959
+    mountElement runtime-core.esm-bundler.js:4882
+    processElement runtime-core.esm-bundler.js:4847
+    patch runtime-core.esm-bundler.js:4715
+    mountChildren runtime-core.esm-bundler.js:4959
+    processFragment runtime-core.esm-bundler.js:5139
+    patch runtime-core.esm-bundler.js:4701
+    mountChildren runtime-core.esm-bundler.js:4959
+    mountElement runtime-core.esm-bundler.js:4882
+    processElement runtime-core.esm-bundler.js:4847
+    patch runtime-core.esm-bundler.js:4715
+    componentUpdateFn runtime-core.esm-bundler.js:5353
+    run reactivity.esm-bundler.js:237
+    setupRenderEffect runtime-core.esm-bundler.js:5481
+    mountComponent runtime-core.esm-bundler.js:5256
+    processComponent runtime-core.esm-bundler.js:5209
+LLMService.vue:294:13

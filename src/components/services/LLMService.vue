@@ -168,6 +168,24 @@ const handleGenerate = async (inputData) => {
       throw new Error('OpenRouter API key is not configured. Please check your .env file.')
     }
     
+    // Préparer la requête
+    const requestBody = {
+      model: getOpenRouterModel.value,
+      messages: apiMessages,
+      temperature: selectedService.value?.config?.temperature || 0.7,
+      max_tokens: selectedService.value?.config?.max_tokens || 2048, // Réduire la limite par défaut
+      stream: true, // Activer le streaming pour une réponse en temps réel
+      ...(selectedService.value?.config?.additional_params || {})
+    }
+    
+    // Log de la requête envoyée
+    console.log('🚀 === REQUÊTE ENVOYÉE AU LLM ===')
+    console.log('URL:', OPENROUTER_API_URL)
+    console.log('Modèle:', getOpenRouterModel.value)
+    console.log('Service sélectionné:', selectedService.value?.name)
+    console.log('API Endpoint du service:', selectedService.value?.api_endpoint)
+    console.log('Corps de la requête:', JSON.stringify(requestBody, null, 2))
+    
     // Appel API OpenRouter
     const response = await fetch(OPENROUTER_API_URL, {
       method: 'POST',
@@ -175,45 +193,154 @@ const handleGenerate = async (inputData) => {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
         'HTTP-Referer': window.location.origin,
-        'X-Title': 'ePavillon AI Platform'
+        'X-Title': 'nelo AI Platform'
       },
-      body: JSON.stringify({
-        model: getOpenRouterModel.value,
-        messages: apiMessages,
-        temperature: selectedService.value?.config?.temperature || 1,
-        max_tokens: selectedService.value?.config?.max_tokens || 4096,
-        stream: false,
-        ...(selectedService.value?.config?.additional_params || {})
-      })
+      body: JSON.stringify(requestBody)
     })
     
+    // Log du statut de la réponse
+    console.log('📡 === STATUT DE LA RÉPONSE ===')
+    console.log('Statut HTTP:', response.status)
+    console.log('Statut OK:', response.ok)
+    console.log('Headers:', Object.fromEntries(response.headers.entries()))
+    
     if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(errorData.error?.message || t('llm.apiError'))
+      // Essayer de récupérer le contenu brut de l'erreur
+      const contentType = response.headers.get('content-type')
+      console.log('❌ === ERREUR RÉPONSE LLM ===')
+      console.log('Content-Type:', contentType)
+      
+      let errorMessage = t('llm.apiError')
+      try {
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json()
+          console.log('Erreur JSON:', errorData)
+          errorMessage = errorData.error?.message || errorData.message || errorMessage
+        } else {
+          // Si ce n'est pas du JSON, récupérer le texte brut
+          const errorText = await response.text()
+          console.log('Erreur texte brut:', errorText)
+          errorMessage = `HTTP ${response.status}: ${errorText.substring(0, 200)}...`
+        }
+      } catch (parseError) {
+        console.error('Impossible de parser l\'erreur:', parseError)
+      }
+      
+      throw new Error(errorMessage)
     }
     
-    const data = await response.json()
+    // Vérifier le content-type de la réponse réussie
+    const contentType = response.headers.get('content-type')
+    const useStreaming = requestBody.stream && contentType && contentType.includes('text/event-stream')
     
-    // Ajouter la réponse de l'assistant
-    const assistantMessage = {
+    let assistantMessage = {
       id: Date.now() + 1,
       role: 'assistant',
-      content: data.choices[0].message.content,
+      content: '',
       timestamp: new Date()
     }
     
-    messages.value.push(assistantMessage)
-    
-    // Déduire les points basés sur l'utilisation réelle ou le coût estimé
-    if (data.usage) {
-      // Si on a les données d'utilisation réelles, calculer le coût basé sur les tokens
-      const actualTokens = data.usage.prompt_tokens + data.usage.completion_tokens
-      const tokenFactor = Math.max(1, actualTokens / 1000)
-      const actualCost = Math.max(1, Math.ceil(selectedService.value.default_cost_points * tokenFactor))
-      await userStore.deductPoints(actualCost)
+    if (useStreaming) {
+      // Gérer le streaming SSE
+      console.log('🔄 === MODE STREAMING ACTIVÉ ===')
+      messages.value.push(assistantMessage)
+      
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let usage = null
+      
+      try {
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+          buffer = lines.pop() || ''
+          
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const jsonStr = line.slice(6)
+              if (jsonStr === '[DONE]') {
+                console.log('✅ === STREAMING TERMINÉ ===')
+                break
+              }
+              
+              try {
+                const chunk = JSON.parse(jsonStr)
+                console.log('📦 Chunk reçu:', chunk)
+                
+                if (chunk.choices && chunk.choices[0]?.delta?.content) {
+                  assistantMessage.content += chunk.choices[0].delta.content
+                  // Mettre à jour le message en temps réel
+                  const msgIndex = messages.value.findIndex(m => m.id === assistantMessage.id)
+                  if (msgIndex !== -1) {
+                    messages.value[msgIndex].content = assistantMessage.content
+                  }
+                }
+                
+                // Capturer les données d'utilisation si disponibles
+                if (chunk.usage) {
+                  usage = chunk.usage
+                }
+              } catch (e) {
+                console.warn('Impossible de parser le chunk:', jsonStr, e)
+              }
+            }
+          }
+        }
+      } finally {
+        reader.releaseLock()
+      }
+      
+      console.log('✅ === RÉPONSE STREAMING COMPLÈTE ===')
+      console.log('Contenu final:', assistantMessage.content)
+      
+      // Calculer le coût avec les données d'utilisation si disponibles
+      console.log('💰 === CALCUL DU COÛT (STREAMING) ===')
+      if (usage) {
+        const actualTokens = usage.prompt_tokens + usage.completion_tokens
+        const tokenFactor = Math.max(1, actualTokens / 1000)
+        const actualCost = Math.max(1, Math.ceil(selectedService.value.default_cost_points * tokenFactor))
+        console.log('Tokens utilisés:', usage)
+        console.log('Coût calculé:', actualCost)
+        await userStore.deductPoints(actualCost)
+      } else {
+        console.log('Pas de données d\'utilisation, utilisation du coût estimé:', estimatedCost)
+        await userStore.deductPoints(estimatedCost)
+      }
+      
     } else {
-      // Sinon, déduire le coût estimé
-      await userStore.deductPoints(estimatedCost)
+      // Mode non-streaming (JSON classique)
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('⚠️ Content-Type inattendu:', contentType)
+        const rawText = await response.text()
+        console.error('Contenu brut reçu:', rawText.substring(0, 500))
+        throw new Error('La réponse n\'est pas du JSON valide')
+      }
+      
+      const data = await response.json()
+      
+      console.log('✅ === RÉPONSE REÇUE DU LLM ===')
+      console.log('Réponse complète:', JSON.stringify(data, null, 2))
+      
+      assistantMessage.content = data.choices[0].message.content
+      messages.value.push(assistantMessage)
+      
+      // Déduire les points basés sur l'utilisation réelle ou le coût estimé
+      console.log('💰 === CALCUL DU COÛT ===')
+      if (data.usage) {
+        const actualTokens = data.usage.prompt_tokens + data.usage.completion_tokens
+        const tokenFactor = Math.max(1, actualTokens / 1000)
+        const actualCost = Math.max(1, Math.ceil(selectedService.value.default_cost_points * tokenFactor))
+        console.log('Tokens utilisés:', data.usage)
+        console.log('Coût calculé:', actualCost)
+        await userStore.deductPoints(actualCost)
+      } else {
+        console.log('Pas de données d\'utilisation, utilisation du coût estimé:', estimatedCost)
+        await userStore.deductPoints(estimatedCost)
+      }
     }
     
   } catch (err) {
