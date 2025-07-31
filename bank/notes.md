@@ -26,3 +26,5 @@ Corps de la requête: {
   "max_tokens": 4096,
   "stream": false
 }
+
+certain models ne support pas le streaming, il faut que je puisse le désactiver dans la configuration du modèle. Par défaut, le streaming est activé.

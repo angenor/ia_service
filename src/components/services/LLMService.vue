@@ -10,7 +10,7 @@
       </div>
       
       <div v-else class="space-y-4">
-        <div v-for="message in messages" :key="message.id" :class="[
+        <div v-for="(message, index) in messages" :key="message.id" :class="[
           'flex',
           message.role === 'user' ? 'justify-end' : 'justify-start'
         ]">
@@ -71,6 +71,7 @@ const messages = ref([])
 const isGenerating = ref(false)
 const error = ref(null)
 const messagesContainer = ref(null)
+const streamingMessageId = ref(null)
 
 // Configuration OpenRouter
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions'
@@ -169,12 +170,13 @@ const handleGenerate = async (inputData) => {
     }
     
     // Préparer la requête
+    const enableStreaming = selectedService.value?.config?.enable_streaming !== false // Activé par défaut
     const requestBody = {
       model: getOpenRouterModel.value,
       messages: apiMessages,
       temperature: selectedService.value?.config?.temperature || 0.7,
       max_tokens: selectedService.value?.config?.max_tokens || 2048, // Réduire la limite par défaut
-      stream: true, // Activer le streaming pour une réponse en temps réel
+      stream: enableStreaming, // Streaming configurable
       ...(selectedService.value?.config?.additional_params || {})
     }
     
@@ -244,6 +246,7 @@ const handleGenerate = async (inputData) => {
       // Gérer le streaming SSE
       console.log('🔄 === MODE STREAMING ACTIVÉ ===')
       messages.value.push(assistantMessage)
+      streamingMessageId.value = assistantMessage.id
       
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
@@ -272,12 +275,24 @@ const handleGenerate = async (inputData) => {
                 console.log('📦 Chunk reçu:', chunk)
                 
                 if (chunk.choices && chunk.choices[0]?.delta?.content) {
-                  assistantMessage.content += chunk.choices[0].delta.content
+                  const newContent = chunk.choices[0].delta.content
+                  console.log('📝 Nouveau contenu:', newContent)
+                  
                   // Mettre à jour le message en temps réel
                   const msgIndex = messages.value.findIndex(m => m.id === assistantMessage.id)
                   if (msgIndex !== -1) {
-                    messages.value[msgIndex].content = assistantMessage.content
+                    // Utiliser splice pour forcer la réactivité
+                    const updatedMessage = {
+                      ...messages.value[msgIndex],
+                      content: messages.value[msgIndex].content + newContent
+                    }
+                    messages.value.splice(msgIndex, 1, updatedMessage)
+                    
+                    console.log('📄 Contenu total actuel:', updatedMessage.content.length, 'caractères')
                   }
+                  // Scroll vers le bas après chaque update
+                  await nextTick()
+                  await scrollToBottom()
                 }
                 
                 // Capturer les données d'utilisation si disponibles
@@ -292,6 +307,7 @@ const handleGenerate = async (inputData) => {
         }
       } finally {
         reader.releaseLock()
+        streamingMessageId.value = null
       }
       
       console.log('✅ === RÉPONSE STREAMING COMPLÈTE ===')
