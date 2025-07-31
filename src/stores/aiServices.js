@@ -8,8 +8,9 @@ export const useAIServicesStore = defineStore('aiServices', () => {
   
   // Data
   const categories = ref([])
-  const subcategories = ref([])
+  const abilities = ref([])
   const services = ref([])
+  const serviceModelAbilities = ref([])
 
   // Computed
   const activeCategories = computed(() => 
@@ -23,11 +24,42 @@ export const useAIServicesStore = defineStore('aiServices', () => {
   const servicesByCategory = computed(() => {
     const grouped = {}
     services.value.forEach(service => {
-      const categoryId = service.category_id || service.subcategory?.category_id
+      const categoryId = service.category_id
       if (!grouped[categoryId]) {
         grouped[categoryId] = []
       }
       grouped[categoryId].push(service)
+    })
+    return grouped
+  })
+
+  // Get abilities by category
+  const abilitiesByCategory = computed(() => {
+    const grouped = {}
+    abilities.value.forEach(ability => {
+      if (!grouped[ability.category_id]) {
+        grouped[ability.category_id] = []
+      }
+      grouped[ability.category_id].push(ability)
+    })
+    return grouped
+  })
+
+  // Get services by ability
+  const servicesByAbility = computed(() => {
+    const grouped = {}
+    serviceModelAbilities.value.forEach(sma => {
+      if (!grouped[sma.ability_id]) {
+        grouped[sma.ability_id] = []
+      }
+      const service = services.value.find(s => s.id === sma.service_id)
+      if (service) {
+        grouped[sma.ability_id].push({
+          ...service,
+          cost_multiplier: sma.cost_multiplier,
+          ability_config: sma.config
+        })
+      }
     })
     return grouped
   })
@@ -53,33 +85,6 @@ export const useAIServicesStore = defineStore('aiServices', () => {
     }
   }
 
-  // Fetch all subcategories
-  async function fetchSubcategories() {
-    loading.value = true
-    error.value = null
-    
-    try {
-      const { data, error: fetchError } = await supabase
-        .from('service_subcategories')
-        .select(`
-          *,
-          service_categories!inner(
-            id,
-            name,
-            slug
-          )
-        `)
-        .order('sort_order', { ascending: true })
-      
-      if (fetchError) throw fetchError
-      subcategories.value = data || []
-    } catch (err) {
-      console.error('Error fetching subcategories:', err)
-      error.value = err.message
-    } finally {
-      loading.value = false
-    }
-  }
 
   // Fetch all services
   async function fetchServices() {
@@ -95,16 +100,6 @@ export const useAIServicesStore = defineStore('aiServices', () => {
             id,
             name,
             slug
-          ),
-          service_subcategories(
-            id,
-            name,
-            slug,
-            service_categories!inner(
-              id,
-              name,
-              slug
-            )
           )
         `)
         .order('created_at', { ascending: false })
@@ -113,6 +108,31 @@ export const useAIServicesStore = defineStore('aiServices', () => {
       services.value = data || []
     } catch (err) {
       console.error('Error fetching services:', err)
+      error.value = err.message
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Fetch service model abilities relationships
+  async function fetchServiceModelAbilities() {
+    loading.value = true
+    error.value = null
+    
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('service_model_abilities')
+        .select(`
+          *,
+          ai_services(id, name, slug),
+          service_abilities(id, name, slug, from_type, to_type)
+        `)
+        .eq('is_active', true)
+      
+      if (fetchError) throw fetchError
+      serviceModelAbilities.value = data || []
+    } catch (err) {
+      console.error('Error fetching service model abilities:', err)
       error.value = err.message
     } finally {
       loading.value = false
@@ -213,121 +233,8 @@ export const useAIServicesStore = defineStore('aiServices', () => {
     }
   }
 
-  // Create a new subcategory
-  async function createSubcategory(subcategoryData) {
-    loading.value = true
-    error.value = null
-    
-    try {
-      const { data, error: createError } = await supabase
-        .from('service_subcategories')
-        .insert([{
-          category_id: subcategoryData.category_id,
-          slug: subcategoryData.slug,
-          name: subcategoryData.name,
-          description: subcategoryData.description,
-          from_type: subcategoryData.from_type,
-          from_icon: subcategoryData.from_icon,
-          to_type: subcategoryData.to_type,
-          to_icon: subcategoryData.to_icon,
-          sort_order: subcategoryData.sort_order || 0,
-          is_active: subcategoryData.is_active !== false
-        }])
-        .select(`
-          *,
-          service_categories!inner(
-            id,
-            name,
-            slug
-          )
-        `)
-        .single()
-      
-      if (createError) throw createError
-      
-      subcategories.value.push(data)
-      subcategories.value.sort((a, b) => a.sort_order - b.sort_order)
-      
-      return data
-    } catch (err) {
-      console.error('Error creating subcategory:', err)
-      error.value = err.message
-      throw err
-    } finally {
-      loading.value = false
-    }
-  }
 
-  // Update a subcategory
-  async function updateSubcategory(subcategoryId, subcategoryData) {
-    loading.value = true
-    error.value = null
-    
-    try {
-      const { data, error: updateError } = await supabase
-        .from('service_subcategories')
-        .update({
-          category_id: subcategoryData.category_id,
-          slug: subcategoryData.slug,
-          name: subcategoryData.name,
-          description: subcategoryData.description,
-          from_type: subcategoryData.from_type,
-          from_icon: subcategoryData.from_icon,
-          to_type: subcategoryData.to_type,
-          to_icon: subcategoryData.to_icon,
-          sort_order: subcategoryData.sort_order,
-          is_active: subcategoryData.is_active
-        })
-        .eq('id', subcategoryId)
-        .select(`
-          *,
-          service_categories!inner(
-            id,
-            name,
-            slug
-          )
-        `)
-        .single()
-      
-      if (updateError) throw updateError
-      
-      const index = subcategories.value.findIndex(sub => sub.id === subcategoryId)
-      if (index !== -1) {
-        subcategories.value[index] = data
-      }
-      
-      return data
-    } catch (err) {
-      console.error('Error updating subcategory:', err)
-      error.value = err.message
-      throw err
-    } finally {
-      loading.value = false
-    }
-  }
 
-  // Delete a subcategory
-  async function deleteSubcategory(subcategoryId) {
-    loading.value = true
-    error.value = null
-    
-    try {
-      const { error: deleteError } = await supabase
-        .from('service_subcategories')
-        .delete()
-        .eq('id', subcategoryId)
-      
-      if (deleteError) throw deleteError
-      
-      subcategories.value = subcategories.value.filter(sub => sub.id !== subcategoryId)
-    } catch (err) {
-      console.error('Error deleting subcategory:', err)
-      error.value = err.message
-      throw err
-    } finally {
-      loading.value = false
-    }
-  }
 
   // Create a new service
   async function createService(serviceData) {
@@ -339,7 +246,6 @@ export const useAIServicesStore = defineStore('aiServices', () => {
         .from('ai_services')
         .insert([{
           category_id: serviceData.category_id,
-          subcategory_id: serviceData.subcategory_id,
           slug: serviceData.slug,
           name: serviceData.name,
           description: serviceData.description,
@@ -363,16 +269,6 @@ export const useAIServicesStore = defineStore('aiServices', () => {
             id,
             name,
             slug
-          ),
-          service_subcategories(
-            id,
-            name,
-            slug,
-            service_categories!inner(
-              id,
-              name,
-              slug
-            )
           )
         `)
         .single()
@@ -401,7 +297,6 @@ export const useAIServicesStore = defineStore('aiServices', () => {
         .from('ai_services')
         .update({
           category_id: serviceData.category_id,
-          subcategory_id: serviceData.subcategory_id,
           slug: serviceData.slug,
           name: serviceData.name,
           description: serviceData.description,
@@ -426,16 +321,6 @@ export const useAIServicesStore = defineStore('aiServices', () => {
             id,
             name,
             slug
-          ),
-          service_subcategories(
-            id,
-            name,
-            slug,
-            service_categories!inner(
-              id,
-              name,
-              slug
-            )
           )
         `)
         .single()
@@ -480,12 +365,259 @@ export const useAIServicesStore = defineStore('aiServices', () => {
     }
   }
 
+  // Fetch all abilities
+  async function fetchAbilities() {
+    loading.value = true
+    error.value = null
+    
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('service_abilities')
+        .select(`
+          *,
+          service_categories!inner(
+            id,
+            name,
+            slug
+          )
+        `)
+        .order('sort_order', { ascending: true })
+      
+      if (fetchError) throw fetchError
+      abilities.value = data || []
+    } catch (err) {
+      console.error('Error fetching abilities:', err)
+      error.value = err.message
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Create a new ability
+  async function createAbility(abilityData) {
+    loading.value = true
+    error.value = null
+    
+    try {
+      const { data, error: createError } = await supabase
+        .from('service_abilities')
+        .insert([{
+          category_id: abilityData.category_id,
+          slug: abilityData.slug,
+          name: abilityData.name,
+          description: abilityData.description,
+          from_type: abilityData.from_type,
+          from_icon: abilityData.from_icon,
+          to_type: abilityData.to_type,
+          to_icon: abilityData.to_icon,
+          sort_order: abilityData.sort_order,
+          is_active: abilityData.is_active
+        }])
+        .select(`
+          *,
+          service_categories!inner(
+            id,
+            name,
+            slug
+          )
+        `)
+        .single()
+      
+      if (createError) throw createError
+      
+      abilities.value.push(data)
+      abilities.value.sort((a, b) => a.sort_order - b.sort_order)
+      
+      return data
+    } catch (err) {
+      console.error('Error creating ability:', err)
+      error.value = err.message
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Update an ability
+  async function updateAbility(abilityId, abilityData) {
+    loading.value = true
+    error.value = null
+    
+    try {
+      const { data, error: updateError } = await supabase
+        .from('service_abilities')
+        .update({
+          category_id: abilityData.category_id,
+          slug: abilityData.slug,
+          name: abilityData.name,
+          description: abilityData.description,
+          from_type: abilityData.from_type,
+          from_icon: abilityData.from_icon,
+          to_type: abilityData.to_type,
+          to_icon: abilityData.to_icon,
+          sort_order: abilityData.sort_order,
+          is_active: abilityData.is_active
+        })
+        .eq('id', abilityId)
+        .select(`
+          *,
+          service_categories!inner(
+            id,
+            name,
+            slug
+          )
+        `)
+        .single()
+      
+      if (updateError) throw updateError
+      
+      const index = abilities.value.findIndex(ability => ability.id === abilityId)
+      if (index !== -1) {
+        abilities.value[index] = data
+      }
+      
+      return data
+    } catch (err) {
+      console.error('Error updating ability:', err)
+      error.value = err.message
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Delete an ability
+  async function deleteAbility(abilityId) {
+    loading.value = true
+    error.value = null
+    
+    try {
+      const { error: deleteError } = await supabase
+        .from('service_abilities')
+        .delete()
+        .eq('id', abilityId)
+      
+      if (deleteError) throw deleteError
+      
+      abilities.value = abilities.value.filter(ability => ability.id !== abilityId)
+    } catch (err) {
+      console.error('Error deleting ability:', err)
+      error.value = err.message
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Get abilities for a specific service
+  function getServiceAbilities(serviceId) {
+    return serviceModelAbilities.value
+      .filter(sma => sma.service_id === serviceId && sma.is_active)
+      .map(sma => ({
+        ...sma.service_abilities,
+        cost_multiplier: sma.cost_multiplier,
+        config: sma.config
+      }))
+  }
+
+  // Get count of models using an ability
+  function getAbilityModelsCount(abilityId) {
+    return serviceModelAbilities.value
+      .filter(sma => sma.ability_id === abilityId && sma.is_active)
+      .length
+  }
+
+  // Update service abilities (many-to-many)
+  async function updateServiceAbilities(serviceId, abilities) {
+    loading.value = true
+    error.value = null
+    
+    try {
+      // Delete existing abilities for this service
+      const { error: deleteError } = await supabase
+        .from('service_model_abilities')
+        .delete()
+        .eq('service_id', serviceId)
+      
+      if (deleteError) throw deleteError
+      
+      // Insert new abilities
+      if (abilities.length > 0) {
+        const { error: insertError } = await supabase
+          .from('service_model_abilities')
+          .insert(
+            abilities.map(ability => ({
+              service_id: serviceId,
+              ability_id: ability.id,
+              cost_multiplier: ability.cost_multiplier || 1.0,
+              config: ability.config || {},
+              is_active: ability.is_active !== false
+            }))
+          )
+        
+        if (insertError) throw insertError
+      }
+      
+      // Refresh the service model abilities
+      await fetchServiceModelAbilities()
+    } catch (err) {
+      console.error('Error updating service abilities:', err)
+      error.value = err.message
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Update ability models (many-to-many)
+  async function updateAbilityModels(abilityId, services) {
+    loading.value = true
+    error.value = null
+    
+    try {
+      // Delete existing services for this ability
+      const { error: deleteError } = await supabase
+        .from('service_model_abilities')
+        .delete()
+        .eq('ability_id', abilityId)
+      
+      if (deleteError) throw deleteError
+      
+      // Insert new services
+      if (services.length > 0) {
+        const { error: insertError } = await supabase
+          .from('service_model_abilities')
+          .insert(
+            services.map(service => ({
+              service_id: service.id,
+              ability_id: abilityId,
+              cost_multiplier: service.cost_multiplier || 1.0,
+              config: service.config || {},
+              is_active: service.is_active !== false
+            }))
+          )
+        
+        if (insertError) throw insertError
+      }
+      
+      // Refresh the service model abilities
+      await fetchServiceModelAbilities()
+    } catch (err) {
+      console.error('Error updating ability models:', err)
+      error.value = err.message
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   // Fetch all data
   async function fetchAllData() {
     await Promise.all([
       fetchCategories(),
-      fetchSubcategories(),
-      fetchServices()
+      fetchAbilities(),
+      fetchServices(),
+      fetchServiceModelAbilities()
     ])
   }
 
@@ -499,18 +631,22 @@ export const useAIServicesStore = defineStore('aiServices', () => {
     loading,
     error,
     categories,
-    subcategories,
+    abilities,
     services,
+    serviceModelAbilities,
     
     // Computed
     activeCategories,
     activeServices,
     servicesByCategory,
+    abilitiesByCategory,
+    servicesByAbility,
     
     // Actions
     fetchCategories,
-    fetchSubcategories,
+    fetchAbilities,
     fetchServices,
+    fetchServiceModelAbilities,
     fetchAllData,
     refreshData,
     
@@ -519,14 +655,21 @@ export const useAIServicesStore = defineStore('aiServices', () => {
     updateCategory,
     deleteCategory,
     
-    // Subcategories CRUD
-    createSubcategory,
-    updateSubcategory,
-    deleteSubcategory,
+    
+    // Abilities CRUD
+    createAbility,
+    updateAbility,
+    deleteAbility,
     
     // Services CRUD
     createService,
     updateService,
-    deleteService
+    deleteService,
+    
+    // Many-to-many helpers
+    getServiceAbilities,
+    getAbilityModelsCount,
+    updateServiceAbilities,
+    updateAbilityModels
   }
 })

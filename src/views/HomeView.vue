@@ -11,15 +11,26 @@
 <script setup>
 import { computed } from 'vue'
 import { useServiceStore } from '@/stores/service'
+import { useAIServicesStore } from '@/stores/aiServices'
 import ServiceInputSection from '@/components/ServiceInputSection.vue'
 import LLMService from '@/components/services/LLMService.vue'
 
 const serviceStore = useServiceStore()
+const aiServicesStore = useAIServicesStore()
+
+// Get the selected service data
+const selectedService = computed(() => {
+  if (!serviceStore.selectedService) return null
+  return aiServicesStore.services.find(s => s.id === serviceStore.selectedService)
+})
 
 // Check if current service is an LLM
 const isLLMService = computed(() => {
-  return serviceStore.selectedCategory === 'llm' && 
-    ['chatgpt', 'claude', 'gemini', 'chat'].includes(serviceStore.selectedService)
+  if (!selectedService.value) return false
+  
+  // Vérifier si le service appartient à la catégorie LLM
+  const serviceCategory = aiServicesStore.categories.find(c => c.id === selectedService.value.category_id)
+  return serviceCategory?.slug === 'llm'
 })
 
 // Handle generation for non-LLM services

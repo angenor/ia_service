@@ -156,18 +156,43 @@
           </button>
         </div>
 
-        <!-- Selected Service Badge (moved to bottom) -->
+        <!-- Selected Service Badge and Abilities (moved to bottom) -->
         <div v-if="serviceStore.isServiceSelected" class="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
-          <div class="flex items-center space-x-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 rounded-full">
-            <span class="text-xs font-medium text-blue-700 dark:text-blue-300">
-              {{ $t(`services.${serviceStore.selectedCategory}.${serviceStore.selectedService}`) }}
-            </span>
-            <button 
-              @click="serviceStore.clearSelection"
-              class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
-            >
-              <font-awesome-icon icon="times" class="text-xs" />
-            </button>
+          <div class="flex items-center space-x-3">
+            <!-- Service Badge -->
+            <div class="flex items-center space-x-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 rounded-full">
+              <span class="text-xs font-medium text-blue-700 dark:text-blue-300">
+                {{ selectedServiceName }}
+              </span>
+              <button 
+                @click="serviceStore.clearSelection"
+                class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+              >
+                <font-awesome-icon icon="times" class="text-xs" />
+              </button>
+            </div>
+            
+            <!-- Service Abilities (discreet display) -->
+            <div v-if="serviceAbilities.length > 0" class="flex items-center space-x-2">
+              <span class="text-xs text-gray-500 dark:text-gray-400">{{ $t('services.abilities') }}:</span>
+              <div class="flex items-center space-x-1">
+                <span 
+                  v-for="(ability, index) in serviceAbilities.slice(0, 3)" 
+                  :key="ability.id"
+                  class="text-xs text-gray-600 dark:text-gray-300"
+                >
+                  <span class="inline-flex items-center space-x-1">
+                    <span class="text-gray-400">{{ ability.from_type }}</span>
+                    <font-awesome-icon icon="arrow-right" class="text-xs text-gray-400" />
+                    <span class="text-gray-400">{{ ability.to_type }}</span>
+                  </span>
+                  <span v-if="index < Math.min(serviceAbilities.length - 1, 2)" class="mx-1 text-gray-400">•</span>
+                </span>
+                <span v-if="serviceAbilities.length > 3" class="text-xs text-gray-500 dark:text-gray-400">
+                  +{{ serviceAbilities.length - 3 }}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -178,10 +203,12 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useServiceStore } from '@/stores/service'
+import { useAIServicesStore } from '@/stores/aiServices'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const serviceStore = useServiceStore()
+const aiServicesStore = useAIServicesStore()
 
 // Props et émissions
 const props = defineProps({
@@ -306,6 +333,21 @@ const currentServicePrompts = computed(() => {
   return servicePromptsList.map(key => t(key))
 })
 
+// Computed pour le service sélectionné
+const selectedService = computed(() => {
+  if (!serviceStore.selectedService) return null
+  return aiServicesStore.services.find(s => s.id === serviceStore.selectedService)
+})
+
+const selectedServiceName = computed(() => {
+  return selectedService.value?.name || ''
+})
+
+const serviceAbilities = computed(() => {
+  if (!serviceStore.selectedService) return []
+  return aiServicesStore.getServiceAbilities(serviceStore.selectedService)
+})
+
 // Computed
 const canGenerate = computed(() => {
   if (!config.value) return false
@@ -320,47 +362,19 @@ const canGenerate = computed(() => {
 })
 
 const estimatedCost = computed(() => {
-  // Tarifs OpenRouter par million de tokens (en USD)
-  const openRouterPricing = {
-    'gpt-3.5-turbo': { input: 0.50, output: 1.50 },
-    'gpt-4': { input: 30.00, output: 60.00 },
-    'gpt-4-turbo': { input: 10.00, output: 30.00 },
-    'claude-3-haiku': { input: 0.25, output: 1.25 },
-    'claude-3-sonnet': { input: 3.00, output: 15.00 },
-    'claude-3-opus': { input: 15.00, output: 75.00 },
-    'gemini-pro': { input: 2.50, output: 7.50 },
-    'gemini-pro-vision': { input: 2.50, output: 7.50 },
-    'llama-3': { input: 0.70, output: 0.80 }
-  }
-
-  // Pour les LLM, calculer basé sur le modèle et les tarifs OpenRouter
-  if (serviceStore.selectedCategory === 'llm' && serviceStore.generationOptions.model) {
-    const pricing = openRouterPricing[serviceStore.generationOptions.model]
-    if (pricing) {
-      // Calcul basé sur une requête minimale (~100 tokens input + 100 tokens output)
-      const minTokens = { input: 100, output: 100 }
-      const costUSD = (minTokens.input * pricing.input / 1000000) + 
-                      (minTokens.output * pricing.output / 1000000)
-      
-      // Convertir en points (100 points = 1 USD) et assurer un minimum de 1 point
-      const points = Math.max(1, Math.ceil(costUSD * 100))
-      return points
+  // Si un service est sélectionné, utiliser son coût défini dans la base
+  if (selectedService.value) {
+    const baseCost = selectedService.value.default_cost_points || 1
+    
+    // Pour les services basés sur le texte, ajuster selon la longueur de l'input
+    if (mainInputValue.value && config.value?.mainInput?.type === 'textarea') {
+      const textLength = mainInputValue.value.trim().length
+      const lengthFactor = Math.max(1, textLength / 1000) // Factor basé sur 1000 caractères
+      return Math.max(1, Math.ceil(baseCost * lengthFactor))
     }
-  }
-
-  // Pour les autres services, utiliser la base de données ou les valeurs par défaut
-  const defaultCosts = {
-    video: { textToVideo: 500, imageToVideo: 400 },
-    image: { textToImage: 100, imageToImage: 150 },
-    music: { textToMusic: 300, generation: 250 },
-    tools: { translation: 10, vision: 50 }
-  }
-
-  if (serviceStore.selectedCategory && serviceStore.selectedService) {
-    const categoryCosts = defaultCosts[serviceStore.selectedCategory]
-    if (categoryCosts) {
-      return categoryCosts[serviceStore.selectedService] || 1
-    }
+    
+    // Pour les autres types de services, utiliser le coût de base
+    return baseCost
   }
 
   // Minimum 1 point par requête

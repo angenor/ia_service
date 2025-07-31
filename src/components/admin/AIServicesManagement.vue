@@ -97,18 +97,18 @@
       </div>
     </div>
 
-    <!-- Gestion des Sous-catégories -->
-    <div v-if="activeServiceTab === 'subcategories'" class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+    <!-- Gestion des Capacités -->
+    <div v-if="activeServiceTab === 'abilities'" class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
       <div class="flex items-center justify-between mb-6">
         <h3 class="text-lg font-medium text-gray-900 dark:text-white">
-          {{ $t('admin.services.subcategories') }}
+          {{ $t('admin.services.abilities') }}
         </h3>
         <button
-          @click="openSubcategoryModal()"
+          @click="openAbilityModal()"
           class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center"
         >
           <font-awesome-icon icon="plus" class="mr-2" />
-          {{ $t('admin.services.addSubcategory') }}
+          {{ $t('admin.services.addAbility') }}
         </button>
       </div>
 
@@ -117,13 +117,19 @@
           <thead class="bg-gray-50 dark:bg-gray-700">
             <tr>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Nom
+                {{ $t('admin.services.abilityName') }}
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Catégorie
+                {{ $t('admin.services.category') }}
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Type de transformation
+                {{ $t('admin.services.transformation') }}
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                {{ $t('admin.services.modelsCount') }}
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                {{ $t('admin.services.isActive') }}
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 {{ $t('admin.common.actions') }}
@@ -131,26 +137,49 @@
             </tr>
           </thead>
           <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            <tr v-for="subcategory in aiServicesStore.subcategories" :key="subcategory.id">
+            <tr v-for="ability in aiServicesStore.abilities" :key="ability.id">
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                {{ subcategory.name }}
+                {{ ability.name }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                {{ subcategory.service_categories?.name }}
+                {{ ability.service_categories?.name }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                {{ subcategory.from_type }} → {{ subcategory.to_type }}
+                <span v-if="ability.from_type && ability.to_type" class="flex items-center">
+                  <span class="text-gray-600 dark:text-gray-400">{{ ability.from_type }}</span>
+                  <font-awesome-icon icon="arrow-right" class="mx-2 text-xs text-gray-400" />
+                  <span class="text-gray-600 dark:text-gray-400">{{ ability.to_type }}</span>
+                </span>
+                <span v-else class="text-gray-400 italic">—</span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                {{ getAbilityModelsCount(ability.id) }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span :class="ability.is_active ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'"
+                      class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
+                  {{ ability.is_active ? $t('admin.common.active') : $t('admin.common.inactive') }}
+                </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                 <button
-                  @click="openSubcategoryModal(subcategory)"
+                  @click="openAbilityModal(ability)"
                   class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                  :title="$t('admin.common.edit')"
                 >
                   <font-awesome-icon icon="edit" />
                 </button>
                 <button
-                  @click="deleteSubcategory(subcategory)"
+                  @click="manageAbilityModels(ability)"
+                  class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
+                  :title="$t('admin.services.manageModels')"
+                >
+                  <font-awesome-icon icon="cogs" />
+                </button>
+                <button
+                  @click="deleteAbility(ability)"
                   class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                  :title="$t('admin.common.delete')"
                 >
                   <font-awesome-icon icon="trash" />
                 </button>
@@ -187,7 +216,10 @@
                 {{ $t('admin.services.serviceProvider') }}
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Sous-catégorie
+                {{ $t('admin.services.category') }}
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                {{ $t('admin.services.abilities') }}
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 {{ $t('admin.services.isActive') }}
@@ -216,7 +248,22 @@
                 {{ service.provider }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                {{ service.service_subcategories?.name || service.service_categories?.name }}
+                {{ service.service_categories?.name }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                <div class="flex flex-wrap gap-1">
+                  <span v-for="ability in getServiceAbilities(service.id)" :key="ability.id"
+                        class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                    {{ ability.name }}
+                  </span>
+                  <button
+                    @click="manageServiceAbilities(service)"
+                    class="ml-1 text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                    :title="$t('admin.services.manageAbilities')"
+                  >
+                    <font-awesome-icon icon="plus-circle" class="text-xs" />
+                  </button>
+                </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <span :class="service.is_active ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'"
@@ -258,52 +305,71 @@
       @save="saveCategory"
     />
 
-    <SubcategoryModal
-      v-if="showSubcategoryModal"
-      :subcategory="selectedSubcategory"
+    <AbilityModal
+      v-if="showAbilityModal"
+      :ability="selectedAbility"
       :categories="aiServicesStore.categories"
-      @close="closeSubcategoryModal"
-      @save="saveSubcategory"
+      @close="closeAbilityModal"
+      @save="saveAbility"
     />
 
     <ServiceModal
       v-if="showServiceModal"
       :service="selectedService"
-      :subcategories="aiServicesStore.subcategories"
+      :categories="aiServicesStore.categories"
       @close="closeServiceModal"
       @save="saveService"
+    />
+
+    <ServiceAbilitiesModal
+      v-if="showServiceAbilitiesModal"
+      :service="selectedService"
+      :abilities="aiServicesStore.abilities"
+      :serviceAbilities="getServiceAbilities(selectedService?.id)"
+      @close="closeServiceAbilitiesModal"
+      @save="aiServicesStore.updateServiceAbilities"
+    />
+
+    <AbilityModelsModal
+      v-if="showAbilityModelsModal"
+      :ability="selectedAbility"
+      :services="aiServicesStore.services"
+      @close="closeAbilityModelsModal"
+      @save="aiServicesStore.updateAbilityModels"
     />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useAdminStore } from '@/stores/admin'
 import { useAIServicesStore } from '@/stores/aiServices'
 import { useI18n } from 'vue-i18n'
 
 // Composants modaux
 import CategoryModal from './modals/CategoryModal.vue'
-import SubcategoryModal from './modals/SubcategoryModal.vue'
+import AbilityModal from './modals/AbilityModal.vue'
 import ServiceModal from './modals/ServiceModal.vue'
+import ServiceAbilitiesModal from './modals/ServiceAbilitiesModal.vue'
+import AbilityModelsModal from './modals/AbilityModelsModal.vue'
 
 const { t } = useI18n()
-const adminStore = useAdminStore()
 const aiServicesStore = useAIServicesStore()
 
 // État local
 const activeServiceTab = ref('categories')
 const showCategoryModal = ref(false)
-const showSubcategoryModal = ref(false)
+const showAbilityModal = ref(false)
 const showServiceModal = ref(false)
+const showServiceAbilitiesModal = ref(false)
+const showAbilityModelsModal = ref(false)
 const selectedCategory = ref(null)
-const selectedSubcategory = ref(null)
+const selectedAbility = ref(null)
 const selectedService = ref(null)
 
 // Configuration des onglets
 const serviceTabs = [
   { id: 'categories', label: 'admin.services.categories' },
-  { id: 'subcategories', label: 'admin.services.subcategories' },
+  { id: 'abilities', label: 'admin.services.abilities' },
   { id: 'services', label: 'admin.services.services' }
 ]
 
@@ -325,7 +391,8 @@ function getValidIcon(iconName) {
     'language', 'eye', 'comments', 'sign-out-alt', 'sign-in-alt', 'times',
     'cloud-upload-alt', 'file', 'camera', 'check-circle', 'laptop', 'chart-line',
     'cogs', 'dollar-sign', 'tags', 'users', 'exclamation-triangle', 'edit',
-    'trash', 'download', 'upload', 'sync', 'user-minus', 'user-plus', 'chart-bar'
+    'trash', 'download', 'upload', 'sync', 'user-minus', 'user-plus', 'chart-bar',
+    'plus-circle'
   ]
   
   return availableIcons.includes(iconName) ? iconName : 'cogs'
@@ -365,38 +432,69 @@ async function deleteCategory(category) {
   }
 }
 
-// Gestion des sous-catégories
-function openSubcategoryModal(subcategory = null) {
-  selectedSubcategory.value = subcategory
-  showSubcategoryModal.value = true
+// Gestion des capacités
+function openAbilityModal(ability = null) {
+  selectedAbility.value = ability
+  showAbilityModal.value = true
 }
 
-function closeSubcategoryModal() {
-  showSubcategoryModal.value = false
-  selectedSubcategory.value = null
+function closeAbilityModal() {
+  showAbilityModal.value = false
+  selectedAbility.value = null
 }
 
-async function saveSubcategory(subcategoryData) {
+async function saveAbility(abilityData) {
   try {
-    if (selectedSubcategory.value) {
-      await aiServicesStore.updateSubcategory(selectedSubcategory.value.id, subcategoryData)
+    if (selectedAbility.value) {
+      await aiServicesStore.updateAbility(selectedAbility.value.id, abilityData)
     } else {
-      await aiServicesStore.createSubcategory(subcategoryData)
+      await aiServicesStore.createAbility(abilityData)
     }
-    closeSubcategoryModal()
+    closeAbilityModal()
   } catch (error) {
-    console.error('Erreur lors de la sauvegarde de la sous-catégorie:', error)
+    console.error('Erreur lors de la sauvegarde de la capacité:', error)
   }
 }
 
-async function deleteSubcategory(subcategory) {
+async function deleteAbility(ability) {
   if (confirm(t('admin.services.confirmDelete'))) {
     try {
-      await aiServicesStore.deleteSubcategory(subcategory.id)
+      await aiServicesStore.deleteAbility(ability.id)
     } catch (error) {
-      console.error('Erreur lors de la suppression de la sous-catégorie:', error)
+      console.error('Erreur lors de la suppression de la capacité:', error)
     }
   }
+}
+
+// Gestion des associations service-capacité
+function manageServiceAbilities(service) {
+  selectedService.value = service
+  showServiceAbilitiesModal.value = true
+}
+
+function closeServiceAbilitiesModal() {
+  showServiceAbilitiesModal.value = false
+  selectedService.value = null
+}
+
+// Gestion des associations capacité-modèles
+function manageAbilityModels(ability) {
+  selectedAbility.value = ability
+  showAbilityModelsModal.value = true
+}
+
+function closeAbilityModelsModal() {
+  showAbilityModelsModal.value = false
+  selectedAbility.value = null
+}
+
+// Helpers
+function getServiceAbilities(serviceId) {
+  return aiServicesStore.getServiceAbilities(serviceId) || []
+}
+
+function getAbilityModelsCount(abilityId) {
+  return aiServicesStore.getAbilityModelsCount(abilityId) || 0
 }
 
 // Gestion des services

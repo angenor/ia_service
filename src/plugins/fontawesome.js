@@ -59,7 +59,11 @@ import {
   faSync,
   faUserMinus,
   faUserPlus,
-  faChartBar
+  faChartBar,
+  faCommentDots,
+  faPuzzlePiece,
+  faFileAlt,
+  faPlusCircle
 } from '@fortawesome/free-solid-svg-icons'
 
 library.add(
@@ -121,7 +125,11 @@ library.add(
   faSync,
   faUserMinus,
   faUserPlus,
-  faChartBar
+  faChartBar,
+  faCommentDots,
+  faPuzzlePiece,
+  faFileAlt,
+  faPlusCircle
 )
 
 export default FontAwesomeIcon

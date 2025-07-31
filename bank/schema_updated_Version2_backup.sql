@@ -46,47 +46,29 @@ CREATE TABLE public.service_categories (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Table des capacités (indépendante des services)
-CREATE TABLE public.service_abilities (
+-- Sous-catégories de services (optionnelles)
+CREATE TABLE public.service_subcategories (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    category_id UUID REFERENCES public.service_categories(id) ON DELETE CASCADE,
+    category_id UUID NOT NULL REFERENCES public.service_categories(id) ON DELETE CASCADE,
     slug TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL,
     description TEXT,
-    -- Metadata pour la transformation
+    -- Transformation metadata
     from_type TEXT,
     from_icon TEXT,
     to_type TEXT,
     to_icon TEXT,
-    -- Configuration globale de cette capacité
-    config JSONB DEFAULT '{}'::jsonb,
-    -- Autres champs
+    -- Other fields
     sort_order INTEGER DEFAULT 0,
     is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Table de liaison many-to-many entre services et capacités
-CREATE TABLE public.service_model_abilities (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    service_id UUID NOT NULL REFERENCES public.ai_services(id) ON DELETE CASCADE,
-    ability_id UUID NOT NULL REFERENCES public.service_abilities(id) ON DELETE CASCADE,
-    -- Modificateur de coût spécifique à ce modèle pour cette capacité
-    cost_multiplier DECIMAL(3,2) DEFAULT 1.0,
-    -- Configuration spécifique à ce modèle pour cette capacité
-    config JSONB DEFAULT '{}'::jsonb,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    -- Contrainte d'unicité
-    UNIQUE(service_id, ability_id)
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Services IA disponibles
 CREATE TABLE public.ai_services (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     category_id UUID REFERENCES public.service_categories(id),
+    subcategory_id UUID REFERENCES public.service_subcategories(id),
     slug TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL,
     description TEXT,
@@ -109,8 +91,11 @@ CREATE TABLE public.ai_services (
     limitations JSONB DEFAULT '{}'::jsonb,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
-    -- Contrainte pour s'assurer qu'un service a toujours une catégorie
-    CONSTRAINT service_category_check CHECK (category_id IS NOT NULL)
+    -- Contrainte pour s'assurer qu'un service a soit une catégorie, soit une sous-catégorie
+    CONSTRAINT service_category_check CHECK (
+        (category_id IS NOT NULL AND subcategory_id IS NULL) OR
+        (subcategory_id IS NOT NULL)
+    )
 );
 
 -- Tarification par pays pour chaque service
@@ -288,8 +273,7 @@ WHERE s.is_active = true;
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.wallets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.service_categories ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.service_abilities ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.service_model_abilities ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.service_subcategories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ai_services ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.service_pricing_by_country ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.service_availability ENABLE ROW LEVEL SECURITY;
@@ -328,10 +312,7 @@ CREATE POLICY "Active AI services are viewable by everyone" ON public.ai_service
 CREATE POLICY "Service categories are viewable by everyone" ON public.service_categories
     FOR SELECT USING (is_active = true);
 
-CREATE POLICY "Service abilities are viewable by everyone" ON public.service_abilities
-    FOR SELECT USING (is_active = true);
-
-CREATE POLICY "Service model abilities are viewable by everyone" ON public.service_model_abilities
+CREATE POLICY "Service subcategories are viewable by everyone" ON public.service_subcategories
     FOR SELECT USING (is_active = true);
 
 CREATE POLICY "Service pricing viewable by country" ON public.service_pricing_by_country
@@ -397,15 +378,7 @@ CREATE POLICY "Admins can manage categories" ON public.service_categories
         )
     );
 
-CREATE POLICY "Admins can manage abilities" ON public.service_abilities
-    FOR ALL USING (
-        EXISTS (
-            SELECT 1 FROM public.profiles 
-            WHERE id = auth.uid() AND is_admin = true
-        )
-    );
-
-CREATE POLICY "Admins can manage service model abilities" ON public.service_model_abilities
+CREATE POLICY "Admins can manage subcategories" ON public.service_subcategories
     FOR ALL USING (
         EXISTS (
             SELECT 1 FROM public.profiles 
@@ -493,15 +466,6 @@ CREATE TRIGGER update_ai_services_updated_at BEFORE UPDATE ON public.ai_services
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_service_pricing_updated_at BEFORE UPDATE ON public.service_pricing_by_country
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
--- Triggers pour les nouvelles tables
-CREATE TRIGGER update_service_abilities_updated_at 
-    BEFORE UPDATE ON public.service_abilities
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_service_model_abilities_updated_at 
-    BEFORE UPDATE ON public.service_model_abilities
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Fonction pour créer automatiquement un wallet lors de la création d'un profil
@@ -797,101 +761,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Fonction pour obtenir les capacités d'un service
-CREATE OR REPLACE FUNCTION get_service_abilities(p_service_id UUID)
-RETURNS TABLE (
-    id UUID,
-    slug TEXT,
-    name TEXT,
-    description TEXT,
-    from_type TEXT,
-    to_type TEXT,
-    cost_multiplier DECIMAL,
-    is_active BOOLEAN
-) 
-SECURITY DEFINER
-SET search_path = public
-AS $$
-BEGIN
-    RETURN QUERY
-    SELECT 
-        sa.id,
-        sa.slug,
-        sa.name,
-        sa.description,
-        sa.from_type,
-        sa.to_type,
-        sma.cost_multiplier,
-        sma.is_active
-    FROM public.service_abilities sa
-    JOIN public.service_model_abilities sma ON sa.id = sma.ability_id
-    WHERE sma.service_id = p_service_id
-    AND sa.is_active = true
-    AND sma.is_active = true
-    ORDER BY sa.sort_order;
-END;
-$$ LANGUAGE plpgsql;
-
--- Fonction pour calculer le coût d'une capacité spécifique pour un service donné
-CREATE OR REPLACE FUNCTION get_service_ability_cost_for_user(
-    p_service_id UUID,
-    p_ability_id UUID,
-    p_user_id UUID
-)
-RETURNS INTEGER AS $$
-DECLARE
-    v_base_cost INTEGER;
-    v_multiplier DECIMAL;
-    v_final_cost INTEGER;
-BEGIN
-    -- Obtenir le coût de base du service et le multiplicateur de la capacité
-    SELECT 
-        get_service_price_for_user(p_service_id, p_user_id),
-        sma.cost_multiplier
-    INTO v_base_cost, v_multiplier
-    FROM public.service_model_abilities sma
-    WHERE sma.service_id = p_service_id 
-    AND sma.ability_id = p_ability_id
-    AND sma.is_active = true;
-    
-    -- Calculer le coût final
-    v_final_cost := CEIL(v_base_cost * v_multiplier);
-    
-    RETURN v_final_cost;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Fonction pour obtenir tous les services qui ont une capacité donnée
-CREATE OR REPLACE FUNCTION get_services_with_ability(p_ability_id UUID)
-RETURNS TABLE (
-    service_id UUID,
-    service_name TEXT,
-    service_slug TEXT,
-    provider TEXT,
-    cost_multiplier DECIMAL,
-    is_available BOOLEAN
-) 
-SECURITY DEFINER
-SET search_path = public
-AS $$
-BEGIN
-    RETURN QUERY
-    SELECT 
-        s.id,
-        s.name,
-        s.slug,
-        s.provider,
-        sma.cost_multiplier,
-        sma.is_active
-    FROM public.ai_services s
-    JOIN public.service_model_abilities sma ON s.id = sma.service_id
-    WHERE sma.ability_id = p_ability_id
-    AND s.is_active = true
-    AND sma.is_active = true
-    ORDER BY s.name;
-END;
-$$ LANGUAGE plpgsql;
-
 -- Fonction RPC pour récupérer le profil utilisateur sans problème RLS
 CREATE OR REPLACE FUNCTION public.get_user_profile(user_id UUID)
 RETURNS TABLE (
@@ -931,61 +800,6 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- =====================================================
--- VUES POUR LES SERVICES ET CAPACITÉS
--- =====================================================
-
--- Vue pour afficher les services avec leurs capacités
-CREATE OR REPLACE VIEW public.services_with_abilities AS
-SELECT 
-    s.id as service_id,
-    s.slug as service_slug,
-    s.name as service_name,
-    s.provider,
-    c.name as category_name,
-    sa.id as ability_id,
-    sa.slug as ability_slug,
-    sa.name as ability_name,
-    sa.from_type,
-    sa.to_type,
-    sma.cost_multiplier,
-    s.default_cost_points,
-    CEIL(s.default_cost_points * sma.cost_multiplier) as ability_cost_points,
-    s.is_active as service_active,
-    sma.is_active as ability_active
-FROM public.ai_services s
-JOIN public.service_categories c ON s.category_id = c.id
-LEFT JOIN public.service_model_abilities sma ON s.id = sma.service_id
-LEFT JOIN public.service_abilities sa ON sma.ability_id = sa.id
-WHERE s.is_active = true
-ORDER BY c.sort_order, s.name, sa.sort_order;
-
--- Vue pour afficher les capacités avec les services qui les supportent
-CREATE OR REPLACE VIEW public.abilities_with_services AS
-SELECT 
-    sa.id as ability_id,
-    sa.slug as ability_slug,
-    sa.name as ability_name,
-    sa.description as ability_description,
-    sa.from_type,
-    sa.to_type,
-    c.name as category_name,
-    s.id as service_id,
-    s.slug as service_slug,
-    s.name as service_name,
-    s.provider,
-    sma.cost_multiplier,
-    s.default_cost_points,
-    CEIL(s.default_cost_points * sma.cost_multiplier) as ability_cost_points,
-    sa.is_active as ability_active,
-    sma.is_active as service_ability_active
-FROM public.service_abilities sa
-JOIN public.service_categories c ON sa.category_id = c.id
-LEFT JOIN public.service_model_abilities sma ON sa.id = sma.ability_id
-LEFT JOIN public.ai_services s ON sma.service_id = s.id
-WHERE sa.is_active = true
-ORDER BY c.sort_order, sa.sort_order, s.name;
-
--- =====================================================
 -- PERMISSIONS ET GRANTS
 -- =====================================================
 
@@ -997,19 +811,6 @@ GRANT SELECT ON public.profiles TO anon;
 GRANT EXECUTE ON FUNCTION public.get_user_profile(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.add_wallet_points TO authenticated;
 GRANT EXECUTE ON FUNCTION public.use_wallet_points TO authenticated;
-
--- Permissions pour les nouvelles tables et fonctions
-GRANT SELECT ON public.service_abilities TO authenticated, anon;
-GRANT SELECT ON public.service_model_abilities TO authenticated, anon;
-GRANT ALL ON public.service_abilities TO postgres, service_role;
-GRANT ALL ON public.service_model_abilities TO postgres, service_role;
-GRANT EXECUTE ON FUNCTION get_service_abilities(UUID) TO authenticated;
-GRANT EXECUTE ON FUNCTION get_service_ability_cost_for_user(UUID, UUID, UUID) TO authenticated;
-GRANT EXECUTE ON FUNCTION get_services_with_ability(UUID) TO authenticated;
-
--- Permissions sur les nouvelles vues
-GRANT SELECT ON public.services_with_abilities TO authenticated, anon;
-GRANT SELECT ON public.abilities_with_services TO authenticated, anon;
 
 -- =====================================================
 -- INDEX POUR LES PERFORMANCES
@@ -1023,14 +824,7 @@ CREATE INDEX idx_wallet_transactions_wallet ON public.wallet_transactions(wallet
 CREATE INDEX idx_wallet_transactions_status ON public.wallet_transactions(status);
 CREATE INDEX idx_ai_services_active ON public.ai_services(is_active);
 CREATE INDEX idx_ai_services_category ON public.ai_services(category_id);
--- Index pour les capacités
-CREATE INDEX idx_service_abilities_category ON public.service_abilities(category_id);
-CREATE INDEX idx_service_abilities_active ON public.service_abilities(is_active);
-CREATE INDEX idx_service_abilities_slug ON public.service_abilities(slug);
--- Index pour la table de liaison
-CREATE INDEX idx_service_model_abilities_service ON public.service_model_abilities(service_id);
-CREATE INDEX idx_service_model_abilities_ability ON public.service_model_abilities(ability_id);
-CREATE INDEX idx_service_model_abilities_active ON public.service_model_abilities(is_active);
+CREATE INDEX idx_ai_services_subcategory ON public.ai_services(subcategory_id);
 CREATE INDEX idx_service_availability_country ON public.service_availability(country_code);
 CREATE INDEX idx_service_pricing_country ON public.service_pricing_by_country(country_code);
 CREATE INDEX idx_service_pricing_service ON public.service_pricing_by_country(service_id);
@@ -1055,8 +849,8 @@ INSERT INTO public.service_categories (slug, name, sort_order) VALUES
 ('document-processing', 'Traitement de Documents', 10),
 ('specialized', 'Services Spécialisés', 11);
 
--- Capacités pour la génération de vidéo
-INSERT INTO public.service_abilities (category_id, slug, name, from_type, from_icon, to_type, to_icon, sort_order)
+-- Sous-catégories pour la génération de vidéo
+INSERT INTO public.service_subcategories (category_id, slug, name, from_type, from_icon, to_type, to_icon, sort_order)
 SELECT 
     id, 
     'text-to-video', 
@@ -1068,7 +862,7 @@ SELECT
     1
 FROM public.service_categories WHERE slug = 'video-generation';
 
-INSERT INTO public.service_abilities (category_id, slug, name, from_type, from_icon, to_type, to_icon, sort_order)
+INSERT INTO public.service_subcategories (category_id, slug, name, from_type, from_icon, to_type, to_icon, sort_order)
 SELECT 
     id, 
     'image-to-video', 
@@ -1080,8 +874,8 @@ SELECT
     2
 FROM public.service_categories WHERE slug = 'video-generation';
 
--- Capacités pour les services audio
-INSERT INTO public.service_abilities (category_id, slug, name, from_type, from_icon, to_type, to_icon, sort_order)
+-- Sous-catégories pour les services audio
+INSERT INTO public.service_subcategories (category_id, slug, name, from_type, from_icon, to_type, to_icon, sort_order)
 SELECT 
     id, 
     'text-to-speech', 
@@ -1093,7 +887,7 @@ SELECT
     1
 FROM public.service_categories WHERE slug = 'audio-services';
 
-INSERT INTO public.service_abilities (category_id, slug, name, from_type, from_icon, to_type, to_icon, sort_order)
+INSERT INTO public.service_subcategories (category_id, slug, name, from_type, from_icon, to_type, to_icon, sort_order)
 SELECT 
     id, 
     'speech-to-text', 
@@ -1105,7 +899,7 @@ SELECT
     2
 FROM public.service_categories WHERE slug = 'audio-services';
 
-INSERT INTO public.service_abilities (category_id, slug, name, from_type, from_icon, to_type, to_icon, sort_order)
+INSERT INTO public.service_subcategories (category_id, slug, name, from_type, from_icon, to_type, to_icon, sort_order)
 SELECT 
     id, 
     'music-generation', 

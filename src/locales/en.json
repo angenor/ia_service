@@ -28,12 +28,18 @@
     "settings": "Settings"
   },
   "services": {
+    "abilities": "Abilities",
     "categories": {
       "video": "Video",
       "image": "Images", 
       "music": "Music",
       "llm": "LLMs",
-      "tools": "Tools"
+      "tools": "Tools",
+      "videoGeneration": "Video Generation",
+      "imageGeneration": "Image Generation",
+      "audioServices": "Audio Services",
+      "translation": "Translation Services",
+      "visionAnalysis": "Vision & Analysis"
     },
     "video": {
       "textToVideo": "Text to Video",
@@ -50,7 +56,24 @@
     "llm": {
       "chatgpt": "ChatGPT",
       "claude": "Claude Sonnet",
-      "gemini": "Gemini"
+      "gemini": "Gemini",
+      "subcategories": {
+        "chatAssistant": "Chat Assistant", 
+        "codeGeneration": "Code Generation",
+        "reasoningMath": "Reasoning & Math",
+        "multimodal": "Multimodal (Vision)"
+      }
+    },
+    "audio": {
+      "textToSpeech": "Text to Speech",
+      "speechToText": "Speech to Text", 
+      "musicGeneration": "Music Generation"
+    },
+    "translation": {
+      "textTranslation": "Text Translation"
+    },
+    "vision": {
+      "imageAnalysis": "Image Analysis"
     },
     "tools": {
       "translation": "Translation",
@@ -500,17 +523,22 @@
       "title": "AI Services Management",
       "categories": "Categories",
       "subcategories": "Subcategories",
+      "abilities": "Abilities",
       "services": "Services",
       "addCategory": "Add Category",
       "addSubcategory": "Add Subcategory",
+      "addAbility": "Add Ability",
       "addService": "Add Service",
       "editCategory": "Edit Category",
       "editSubcategory": "Edit Subcategory",
+      "editAbility": "Edit Ability",
       "editService": "Edit Service",
       "deleteCategory": "Delete Category",
       "deleteSubcategory": "Delete Subcategory",
+      "deleteAbility": "Delete Ability",
       "deleteService": "Delete Service",
       "categoryName": "Category Name",
+      "category": "Category",
       "categoryIcon": "Icon",
       "categoryOrder": "Display Order",
       "isActive": "Active",
@@ -524,7 +552,12 @@
       "serviceLimitations": "Limitations",
       "isNew": "New Service",
       "newBadgeUntil": "New badge until",
-      "confirmDelete": "Are you sure you want to delete this item?"
+      "confirmDelete": "Are you sure you want to delete this item?",
+      "abilityName": "Ability Name",
+      "transformation": "Transformation",
+      "modelsCount": "Models Count",
+      "manageModels": "Manage Models",
+      "manageAbilities": "Manage Abilities"
     },
     "pricing": {
       "title": "Pricing Management",

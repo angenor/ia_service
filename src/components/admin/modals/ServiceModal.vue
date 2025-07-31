@@ -53,16 +53,16 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Sous-catégorie
+                {{ $t('admin.services.category') }}
               </label>
               <select
-                v-model="form.subcategory_id"
+                v-model="form.category_id"
                 required
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
-                <option value="">Sélectionner une sous-catégorie</option>
-                <option v-for="subcategory in subcategories" :key="subcategory.id" :value="subcategory.id">
-                  {{ subcategory.name }}
+                <option value="">Sélectionner une catégorie</option>
+                <option v-for="category in categories" :key="category.id" :value="category.id">
+                  {{ category.name }}
                 </option>
               </select>
             </div>
@@ -202,7 +202,7 @@ const props = defineProps({
     type: Object,
     default: null
   },
-  subcategories: {
+  categories: {
     type: Array,
     default: () => []
   }
@@ -214,7 +214,7 @@ const form = ref({
   name: '',
   display_name: '',
   description: '',
-  subcategory_id: '',
+  category_id: '',
   provider: 'openrouter',
   api_endpoint: '',
   model_name: '',

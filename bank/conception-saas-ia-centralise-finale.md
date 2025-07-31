@@ -67,10 +67,32 @@ Plateforme SaaS centralisée offrant un accès unifié à plusieurs services d'I
 
 #### 3.3.1 Structure hiérarchique
 
-- **Catégories principales**: Organisation des services par type
-- **Sous-catégories** (optionnelles): Pour les transformations spécifiques
-  - Metadata de transformation: type source → type destination
-  - Icônes spécifiques pour chaque type
+**Architecture en 3 niveaux avec relation many-to-many:**
+- **Catégories principales**: Organisation des services par type (ex: LLM, Génération d'images, etc.)
+- **Services IA (Modèles)**: Les modèles spécifiques dans chaque catégorie (ex: Claude, GPT-4, etc.)
+- **Capacités**: Les capacités disponibles qui peuvent être partagées par plusieurs modèles
+
+**Relations:**
+- Une catégorie contient plusieurs modèles (`service_categories` → `ai_services`)
+- Une catégorie définit plusieurs capacités (`service_categories` → `service_abilities`)
+- **Relation many-to-many**: Un modèle peut avoir plusieurs capacités, et une capacité peut être supportée par plusieurs modèles
+- Table de liaison: `service_model_abilities` pour gérer les associations modèle-capacité
+
+**Avantages de cette architecture:**
+- **Flexibilité**: Une capacité comme "chat-assistant" peut être partagée par Claude, GPT-4, Grok
+- **Tarification précise**: Chaque association modèle-capacité a son propre multiplicateur de coût
+- **Évolutivité**: Facile d'ajouter de nouvelles capacités ou d'associer des capacités existantes à de nouveaux modèles
+
+**Capacités (service_abilities):**
+- Définition globale des capacités par catégorie
+- Metadata de transformation: type source → type destination
+- Icônes spécifiques pour chaque type
+- Configuration globale via JSONB
+
+**Liaison modèle-capacité (service_model_abilities):**
+- Multiplicateur de coût spécifique à la combinaison modèle-capacité
+- Configuration spécifique à cette association
+- Activation/désactivation par association
 
 #### 3.3.2 Tarification dynamique par pays
 
@@ -122,11 +144,15 @@ Plateforme SaaS centralisée offrant un accès unifié à plusieurs services d'I
 
 #### 3.6.2 Gestion des services
 
-- Configuration des catégories et sous-catégories
-- Activation/désactivation des services
+- Configuration des catégories de services
+- Gestion des modèles IA (services) par catégorie
+- Définition des capacités globales par catégorie
+- Association modèles-capacités avec multiplicateurs de coût
+- Activation/désactivation des services, capacités et associations
 - Gestion des prix par pays avec historique
 - Configuration des disponibilités géographiques
 - Paramétrage des métadonnées (features, limitations)
+- Interface de gestion des relations many-to-many
 
 #### 3.6.3 Outils de gestion
 
@@ -149,27 +175,38 @@ Plateforme SaaS centralisée offrant un accès unifié à plusieurs services d'I
 ### 4.1 Large Language Models (LLMs)
 *Catégorie: llm*
 
-- ChatGPT (OpenAI)
-- Gemini (Google)
-- Claude (Anthropic)
-- Perplexity AI
-- Grok
+**Modèles disponibles:**
+- Claude Opus 4 (Anthropic)
+- Claude Sonnet 4 (Anthropic)
+- GPT-4 Turbo (OpenAI)
+- GPT-4 (OpenAI)
+- Grok (xAI)
+
+**Capacités possibles pour chaque modèle:**
+- Assistant Conversationnel (chat-assistant)
+- Génération de Texte (text-generation)
+- Génération de Code (code-generation)
+- Analyse de Texte (text-analysis)
+- Traduction Avancée (translation-llm)
+- Raisonnement & Mathématiques (reasoning-math)
+- Multimodal - Vision + Texte (multimodal-llm)
+- LLMs Spécialisés (specialized-llm)
 
 ### 4.2 Génération vidéo
 *Catégorie: video-generation*
 
-#### Text-to-Video (Sous-catégorie: text-to-video)
+**Modèles disponibles:**
 - Google Veo
-- MidJourney
 - MiniMax
 - RunwayML Gen-3
 - Pika Labs
 - Stable Video Diffusion
-- HeyGen (avatars IA économique)
-- Synthesia (avatars IA premium)
+- HeyGen
+- Synthesia
 
-#### Image-to-Video (Sous-catégorie: image-to-video)
-- *À définir*
+**Capacités possibles:**
+- Text-to-Video (text-to-video): Texte → Vidéo
+- Image-to-Video (image-to-video): Image → Vidéo
 
 ### 4.3 Génération d'images
 *Catégorie: image-generation*
@@ -185,20 +222,16 @@ Plateforme SaaS centralisée offrant un accès unifié à plusieurs services d'I
 ### 4.4 Services audio
 *Catégorie: audio-services*
 
-#### Text-to-Speech (Sous-catégorie: text-to-speech)
-- ElevenLabs (voix ultra-réalistes)
-- Google Cloud TTS
-- Microsoft Azure TTS
-
-#### Speech-to-Text (Sous-catégorie: speech-to-text)
-- Google Cloud STT
-- Microsoft Azure STT
-
-#### Génération musicale (Sous-catégorie: music-generation)
-- Suno AI (musique) - ⚠️ Pas d'API
-- Udio (musique) - ⚠️ Pas d'API
+**Modèles disponibles:**
+- ElevenLabs
+- Google Cloud TTS/STT
+- Microsoft Azure TTS/STT
 - Stable Audio
-- AudioCraft - ⚠️ Pas d'API
+
+**Capacités possibles:**
+- Text-to-Speech (text-to-speech): Texte → Audio
+- Speech-to-Text (speech-to-text): Audio → Texte
+- Génération musicale (music-generation): Texte → Musique
 
 ### 4.5 Assistance au développement
 *Catégorie: dev-assistance*
@@ -357,22 +390,48 @@ Claude-3   | US   | 0.02$/req| 200 points  | 35%    | 2,100 req/jour
 
 ### 8.1 Phase 1 - MVP
 
-1. Implémenter la structure de base avec Supabase
-2. Configurer l'authentification et les profils utilisateurs
-3. Développer le système de wallet et points
-4. Créer l'interface d'administration avec dashboard financier
-5. Implémenter la gestion des prix par pays
-6. Mettre en place l'infrastructure i18n
-7. Intégrer 3-5 services IA essentiels avec catégorisation
+1. **Structure de base et migration**
+   - Appliquer la migration `service_subcategories` → `service_abilities` avec relation many-to-many
+   - Implémenter la nouvelle architecture 3 niveaux avec table de liaison
+   - Configurer l'authentification et les profils utilisateurs
+
+2. **Système financier**
+   - Développer le système de wallet et points
+   - Implémenter le calcul de coût par association modèle-capacité
+   - Intégrer les multiplicateurs de coût dans la tarification
+   - Créer l'interface d'administration avec dashboard financier
+
+3. **Gestion des services et capacités**
+   - Interface de gestion des modèles par catégorie
+   - Interface de définition des capacités globales
+   - Système d'association many-to-many modèles-capacités
+   - Gestion des multiplicateurs de coût par association
+   - Intégrer 3-5 modèles LLM avec leurs capacités partagées
+
+4. **Internationalisation**
+   - Mettre en place l'infrastructure i18n
+   - Interface utilisateur responsive
 
 ### 8.2 Phase 2 - Expansion
 
-1. Ajouter progressivement les autres services par catégorie
-2. Implémenter le système de promotions
-3. Enrichir les traductions disponibles
-4. Développer les restrictions géographiques avancées
-5. Optimiser l'interface utilisateur
-6. Améliorer les outils de reporting financier
+1. **Extension des services**
+   - Ajouter progressivement les autres catégories (génération d'images, vidéo, audio)
+   - Définir les capacités partagées pour chaque catégorie
+   - Associer les nouveaux modèles aux capacités existantes et nouvelles
+   - Configuration des multiplicateurs de coût par association
+
+2. **Fonctionnalités avancées**
+   - Implémenter le système de promotions
+   - Développer les restrictions géographiques avancées
+   - Interface de comparaison de modèles par capacité
+   - Enrichir les traductions disponibles
+
+3. **Optimisation**
+   - Interface utilisateur avec navigation par capacités
+   - Vue "Quels modèles supportent cette capacité?"
+   - Outils de reporting financier par modèle et capacité
+   - Analytics d'utilisation des associations modèle-capacité
+   - Recommandations de modèles basées sur les capacités demandées
 
 ### 8.3 Phase 3 - Optimisation
 

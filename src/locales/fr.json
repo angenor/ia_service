@@ -28,12 +28,18 @@
     "settings": "Paramètres"
   },
   "services": {
+    "abilities": "Capacités",
     "categories": {
       "video": "Vidéo",
       "image": "Images",
       "music": "Musique", 
       "llm": "LLMs",
-      "tools": "Outils"
+      "tools": "Outils",
+      "videoGeneration": "Génération de Vidéo",
+      "imageGeneration": "Génération d'Images",
+      "audioServices": "Services Audio",
+      "translation": "Services de Traduction",
+      "visionAnalysis": "Vision et Analyse"
     },
     "video": {
       "textToVideo": "Texte vers Vidéo",
@@ -50,7 +56,24 @@
     "llm": {
       "chatgpt": "ChatGPT",
       "claude": "Claude Sonnet", 
-      "gemini": "Gemini"
+      "gemini": "Gemini",
+      "subcategories": {
+        "chatAssistant": "Assistant Conversationnel",
+        "codeGeneration": "Génération de Code",
+        "reasoningMath": "Raisonnement & Mathématiques",
+        "multimodal": "Multimodal (Vision)"
+      }
+    },
+    "audio": {
+      "textToSpeech": "Texte vers Parole",
+      "speechToText": "Parole vers Texte",
+      "musicGeneration": "Génération Musicale"
+    },
+    "translation": {
+      "textTranslation": "Traduction de Texte"
+    },
+    "vision": {
+      "imageAnalysis": "Analyse d'Images"
     },
     "tools": {
       "translation": "Traduction",
@@ -500,17 +523,22 @@
       "title": "Gestion des services IA",
       "categories": "Catégories",
       "subcategories": "Sous-catégories",
+      "abilities": "Capacités",
       "services": "Services",
       "addCategory": "Ajouter une catégorie",
       "addSubcategory": "Ajouter une sous-catégorie",
+      "addAbility": "Ajouter une capacité",
       "addService": "Ajouter un service",
       "editCategory": "Modifier la catégorie",
       "editSubcategory": "Modifier la sous-catégorie",
+      "editAbility": "Modifier la capacité",
       "editService": "Modifier le service",
       "deleteCategory": "Supprimer la catégorie",
       "deleteSubcategory": "Supprimer la sous-catégorie",
+      "deleteAbility": "Supprimer la capacité",
       "deleteService": "Supprimer le service",
       "categoryName": "Nom de la catégorie",
+      "category": "Catégorie",
       "categoryIcon": "Icône",
       "categoryOrder": "Ordre d'affichage",
       "isActive": "Actif",
@@ -524,7 +552,12 @@
       "serviceLimitations": "Limitations",
       "isNew": "Nouveau service",
       "newBadgeUntil": "Badge nouveau jusqu'à",
-      "confirmDelete": "Êtes-vous sûr de vouloir supprimer cet élément ?"
+      "confirmDelete": "Êtes-vous sûr de vouloir supprimer cet élément ?",
+      "abilityName": "Nom de la capacité",
+      "transformation": "Transformation",
+      "modelsCount": "Nombre de modèles",
+      "manageModels": "Gérer les modèles",
+      "manageAbilities": "Gérer les capacités"
     },
     "pricing": {
       "title": "Gestion tarifaire",

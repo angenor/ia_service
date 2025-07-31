@@ -3,8 +3,8 @@ import { ref, computed } from 'vue'
 
 export const useServiceStore = defineStore('service', () => {
   // État
-  const selectedCategory = ref(null)
-  const selectedService = ref(null)
+  const selectedService = ref(null) // Service ID
+  const selectedAbility = ref(null) // Ability ID
   const inputConfig = ref({})
   const generationOptions = ref({})
 
@@ -351,34 +351,37 @@ export const useServiceStore = defineStore('service', () => {
 
   // Getters
   const currentConfig = computed(() => {
-    if (!selectedCategory.value || !selectedService.value) {
+    // TODO: Retourner la configuration basée sur le service et la capacité sélectionnés
+    // Pour l'instant, retourner une configuration par défaut
+    if (!selectedService.value) {
       return null
     }
     
-    const category = serviceConfigs[selectedCategory.value]
-    if (!category) return null
-    
-    return category[selectedService.value] || null
+    // Configuration par défaut générique
+    return {
+      mainInput: {
+        type: 'textarea',
+        placeholder: 'input.general.placeholder',
+        rows: 3
+      },
+      options: [],
+      allowFileUpload: false,
+      acceptedFileTypes: []
+    }
   })
 
   const isServiceSelected = computed(() => {
-    return selectedCategory.value !== null && selectedService.value !== null
+    return selectedService.value !== null
   })
 
   // Actions
-  function selectService(category, service) {
-    selectedCategory.value = category
-    selectedService.value = service
+  function selectService(serviceId, abilityId = null) {
+    selectedService.value = serviceId
+    selectedAbility.value = abilityId
     
-    // Réinitialiser les options avec les valeurs par défaut
-    const config = serviceConfigs[category]?.[service]
-    if (config?.options) {
-      const defaults = {}
-      config.options.forEach(option => {
-        defaults[option.key] = option.default
-      })
-      generationOptions.value = defaults
-    }
+    // TODO: Charger la configuration dynamique basée sur le service et la capacité
+    // Pour l'instant, réinitialiser avec des valeurs par défaut
+    generationOptions.value = {}
   }
 
   function updateOption(key, value) {
@@ -386,15 +389,15 @@ export const useServiceStore = defineStore('service', () => {
   }
 
   function clearSelection() {
-    selectedCategory.value = null
     selectedService.value = null
+    selectedAbility.value = null
     inputConfig.value = {}
     generationOptions.value = {}
   }
 
   return {
-    selectedCategory,
     selectedService,
+    selectedAbility,
     inputConfig,
     generationOptions,
     currentConfig,

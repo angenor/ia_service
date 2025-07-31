@@ -54,14 +54,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick, watch } from 'vue'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useServiceStore } from '@/stores/service'
+import { useAIServicesStore } from '@/stores/aiServices' 
 import { useUserStore } from '@/stores/user'
 import { useI18n } from 'vue-i18n'
 import ServiceInputSection from '@/components/ServiceInputSection.vue'
 
 const { t } = useI18n()
 const serviceStore = useServiceStore()
+const aiServicesStore = useAIServicesStore()
 const userStore = useUserStore()
 
 // État local
@@ -79,38 +81,19 @@ if (!OPENROUTER_API_KEY) {
   console.error('OpenRouter API key is missing. Please add VITE_OPENROUTER_API_KEY to your .env file')
 }
 
-// Map des modèles vers les identifiants OpenRouter
-const modelMapping = {
-  // ChatGPT
-  'gpt-3.5-turbo': 'openai/gpt-3.5-turbo',
-  'gpt-4': 'openai/gpt-4',
-  'gpt-4-turbo': 'openai/gpt-4-turbo-preview',
-  
-  // Claude
-  'claude-3-haiku': 'anthropic/claude-3-haiku',
-  'claude-3-sonnet': 'anthropic/claude-3-sonnet',
-  'claude-3-opus': 'anthropic/claude-3-opus',
-  
-  // Gemini
-  'gemini-pro': 'google/gemini-pro',
-  'gemini-pro-vision': 'google/gemini-pro-vision',
-  
-  // Autres modèles pour le chat générique
-  'llama-3': 'meta-llama/llama-3-70b-instruct'
-}
+// Get selected service data
+const selectedService = computed(() => {
+  if (!serviceStore.selectedService) return null
+  return aiServicesStore.services.find(s => s.id === serviceStore.selectedService)
+})
 
-// Tarifs OpenRouter par million de tokens (en USD) - basés sur la documentation officielle
-const openRouterPricing = {
-  'gpt-3.5-turbo': { input: 0.50, output: 1.50 },
-  'gpt-4': { input: 30.00, output: 60.00 },
-  'gpt-4-turbo': { input: 10.00, output: 30.00 },
-  'claude-3-haiku': { input: 0.25, output: 1.25 },
-  'claude-3-sonnet': { input: 3.00, output: 15.00 },
-  'claude-3-opus': { input: 15.00, output: 75.00 },
-  'gemini-pro': { input: 2.50, output: 7.50 },
-  'gemini-pro-vision': { input: 2.50, output: 7.50 },
-  'llama-3': { input: 0.70, output: 0.80 }
-}
+// Utiliser l'api_endpoint du service sélectionné directement
+const getOpenRouterModel = computed(() => {
+  if (!selectedService.value) return 'openai/gpt-3.5-turbo'
+  
+  // Utiliser directement l'api_endpoint stocké dans la base de données
+  return selectedService.value.api_endpoint || 'openai/gpt-3.5-turbo'
+})
 
 // Formatage du temps
 const formatTime = (timestamp) => {
@@ -135,21 +118,19 @@ const estimateTokens = (text) => {
   return Math.ceil(text.length / 4)
 }
 
-// Calcul du coût estimé basé sur les tarifs OpenRouter
-const calculateCost = (text, model) => {
-  const pricing = openRouterPricing[model]
-  if (!pricing) return 1
+// Calcul du coût basé sur les données du service
+const calculateCost = (text) => {
+  if (!selectedService.value) return 1
   
+  // Utiliser le coût défini dans la base de données
+  const baseCost = selectedService.value.default_cost_points || 1
+  
+  // Pour les modèles LLM, on peut ajuster le coût en fonction de la longueur
+  // mais on utilise le coût de base défini par l'admin
   const tokens = estimateTokens(text)
-  // Estimation: 80% des tokens en output pour une conversation
-  const inputTokens = tokens
-  const outputTokens = Math.ceil(tokens * 0.8)
+  const tokenFactor = Math.max(1, tokens / 1000) // Factor basé sur 1000 tokens
   
-  const costUSD = (inputTokens * pricing.input / 1000000) + 
-                  (outputTokens * pricing.output / 1000000)
-  
-  // Convertir en points (100 points = 1 USD) et assurer un minimum de 1 point
-  return Math.max(1, Math.ceil(costUSD * 100))
+  return Math.max(1, Math.ceil(baseCost * tokenFactor))
 }
 
 // Gestion de la génération
@@ -171,7 +152,7 @@ const handleGenerate = async (inputData) => {
   
   try {
     // Vérifier les points de l'utilisateur
-    const estimatedCost = calculateCost(inputData.mainInput, serviceStore.generationOptions.model)
+    const estimatedCost = calculateCost(inputData.mainInput)
     if (userStore.points < estimatedCost) {
       throw new Error(t('llm.insufficientPoints'))
     }
@@ -197,11 +178,12 @@ const handleGenerate = async (inputData) => {
         'X-Title': 'ePavillon AI Platform'
       },
       body: JSON.stringify({
-        model: modelMapping[serviceStore.generationOptions.model] || 'openai/gpt-3.5-turbo',
+        model: getOpenRouterModel.value,
         messages: apiMessages,
-        temperature: serviceStore.generationOptions.temperature || 0.7,
-        max_tokens: 1000,
-        stream: false
+        temperature: selectedService.value?.config?.temperature || 1,
+        max_tokens: selectedService.value?.config?.max_tokens || 4096,
+        stream: false,
+        ...(selectedService.value?.config?.additional_params || {})
       })
     })
     
@@ -222,13 +204,16 @@ const handleGenerate = async (inputData) => {
     
     messages.value.push(assistantMessage)
     
-    // Déduire les points basés sur l'utilisation réelle
-    const pricing = openRouterPricing[serviceStore.generationOptions.model]
-    if (pricing && data.usage) {
-      const costUSD = (data.usage.prompt_tokens * pricing.input / 1000000) + 
-                      (data.usage.completion_tokens * pricing.output / 1000000)
-      const actualCost = Math.max(1, Math.ceil(costUSD * 100))
+    // Déduire les points basés sur l'utilisation réelle ou le coût estimé
+    if (data.usage) {
+      // Si on a les données d'utilisation réelles, calculer le coût basé sur les tokens
+      const actualTokens = data.usage.prompt_tokens + data.usage.completion_tokens
+      const tokenFactor = Math.max(1, actualTokens / 1000)
+      const actualCost = Math.max(1, Math.ceil(selectedService.value.default_cost_points * tokenFactor))
       await userStore.deductPoints(actualCost)
+    } else {
+      // Sinon, déduire le coût estimé
+      await userStore.deductPoints(estimatedCost)
     }
     
   } catch (err) {
@@ -246,8 +231,13 @@ watch(() => serviceStore.selectedService, () => {
   error.value = null
 })
 
-onMounted(() => {
+onMounted(async () => {
   messagesContainer.value = document.querySelector('.overflow-y-auto')
+  
+  // S'assurer que les services sont chargés
+  if (aiServicesStore.services.length === 0) {
+    await aiServicesStore.fetchAllData()
+  }
 })
 </script>
 

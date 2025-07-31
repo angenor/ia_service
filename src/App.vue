@@ -74,7 +74,7 @@ onMounted(() => {
                   <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
                     <font-awesome-icon icon="user" class="text-white text-sm" />
                   </div>
-                </div>
+                </div> 
                 
                 <!-- Theme and Language -->
                 <div class="flex items-center space-x-2">
