@@ -170,13 +170,17 @@ const handleGenerate = async (inputData) => {
     }
     
     // Préparer la requête
-    const enableStreaming = selectedService.value?.config?.enable_streaming !== false // Activé par défaut
+    // Vérifier si le modèle supporte le streaming (par défaut true)
+    const supportsStreaming = selectedService.value?.supports_streaming !== false
+    // Permettre aussi de désactiver via la config
+    const enableStreaming = supportsStreaming && selectedService.value?.config?.enable_streaming !== false
+    
     const requestBody = {
       model: getOpenRouterModel.value,
       messages: apiMessages,
       temperature: selectedService.value?.config?.temperature || 0.7,
       max_tokens: selectedService.value?.config?.max_tokens || 2048, // Réduire la limite par défaut
-      stream: enableStreaming, // Streaming configurable
+      stream: enableStreaming, // Streaming basé sur le support du modèle ET la config
       ...(selectedService.value?.config?.additional_params || {})
     }
     
@@ -186,6 +190,8 @@ const handleGenerate = async (inputData) => {
     console.log('Modèle:', getOpenRouterModel.value)
     console.log('Service sélectionné:', selectedService.value?.name)
     console.log('API Endpoint du service:', selectedService.value?.api_endpoint)
+    console.log('Support du streaming:', supportsStreaming ? '✅ Oui' : '❌ Non')
+    console.log('Streaming activé:', enableStreaming ? '✅ Oui' : '❌ Non')
     console.log('Corps de la requête:', JSON.stringify(requestBody, null, 2))
     
     // Appel API OpenRouter

@@ -251,17 +251,18 @@ export const useAIServicesStore = defineStore('aiServices', () => {
           description: serviceData.description,
           provider: serviceData.provider,
           api_endpoint: serviceData.api_endpoint,
-          icon: serviceData.icon,
-          png: serviceData.png,
-          video: serviceData.video,
-          default_cost_points: serviceData.default_cost_points,
-          api_cost_usd: serviceData.api_cost_usd,
+          icon: serviceData.icon || null,
+          png: serviceData.png || null,
+          video: serviceData.video || null,
+          default_cost_points: serviceData.default_cost_points || 1,
+          api_cost_usd: serviceData.api_cost_usd || 0,
           config: serviceData.config || {},
           is_active: serviceData.is_active !== false,
           is_new: serviceData.is_new || false,
-          new_until: serviceData.new_until,
+          new_until: serviceData.new_until || null,
           features: serviceData.features || [],
-          limitations: serviceData.limitations || {}
+          limitations: serviceData.limitations || {},
+          supports_streaming: serviceData.supports_streaming !== false
         }])
         .select(`
           *,
@@ -302,17 +303,18 @@ export const useAIServicesStore = defineStore('aiServices', () => {
           description: serviceData.description,
           provider: serviceData.provider,
           api_endpoint: serviceData.api_endpoint,
-          icon: serviceData.icon,
-          png: serviceData.png,
-          video: serviceData.video,
-          default_cost_points: serviceData.default_cost_points,
-          api_cost_usd: serviceData.api_cost_usd,
-          config: serviceData.config,
+          icon: serviceData.icon || null,
+          png: serviceData.png || null,
+          video: serviceData.video || null,
+          default_cost_points: serviceData.default_cost_points || 1,
+          api_cost_usd: serviceData.api_cost_usd || 0,
+          config: serviceData.config || {},
           is_active: serviceData.is_active,
           is_new: serviceData.is_new,
-          new_until: serviceData.new_until,
-          features: serviceData.features,
-          limitations: serviceData.limitations
+          new_until: serviceData.new_until || null,
+          features: serviceData.features || [],
+          limitations: serviceData.limitations || {},
+          supports_streaming: serviceData.supports_streaming
         })
         .eq('id', serviceId)
         .select(`

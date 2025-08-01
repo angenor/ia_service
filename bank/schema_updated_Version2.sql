@@ -104,6 +104,8 @@ CREATE TABLE public.ai_services (
     is_active BOOLEAN DEFAULT TRUE,
     is_new BOOLEAN DEFAULT FALSE,
     new_until DATE,
+    -- Streaming support
+    supports_streaming BOOLEAN DEFAULT TRUE,
     -- Metadata
     features JSONB DEFAULT '[]'::jsonb,
     limitations JSONB DEFAULT '{}'::jsonb,

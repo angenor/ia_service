@@ -228,6 +228,9 @@
                 {{ $t('admin.services.isNew') }}
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                Streaming
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 {{ $t('admin.common.actions') }}
               </th>
             </tr>
@@ -275,6 +278,12 @@
                 <span v-if="service.is_new && isNewBadgeActive(service.new_until)"
                       class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
                   Nouveau
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span :class="service.supports_streaming !== false ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'"
+                      class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
+                  {{ service.supports_streaming !== false ? '✅ Activé' : '❌ Désactivé' }}
                 </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
